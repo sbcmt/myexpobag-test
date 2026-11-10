@@ -125,7 +125,7 @@ L"></textarea></div></div></div>
       report('読み込みに必要なJavaScriptを取得できませんでした。通信状況と公開ファイルをご確認ください。');
     }else if(event.error && /products\.js/.test(event.filename||'')){
       console.error('MY EXPO BAG product startup error:',event.error);
-      report('商品登録画面の処理でエラーが発生しました。ページを再読み込みしてお試しください。');
+      report('商品登録画面の処理でエラーが発生しました。詳細：'+String(event.error?.message||'不明なエラー').slice(0,180)+'（ファイル'+(event.lineno||'?')+'行）');
     }
   },true);
   window.addEventListener('unhandledrejection',event=>{
@@ -138,6 +138,6 @@ L"></textarea></div></div></div>
   },15000);
 })();
 </script>
-<script onerror="window.MEB_PRODUCTS_STARTUP_ERROR?.()" src="./products.js?asset=20261019-expand-fields-02" type="module"></script>
+<script onerror="window.MEB_PRODUCTS_STARTUP_ERROR?.()" src="./products.js?asset=20261110-ui-5tabs-hotfix1" type="module"></script>
 <div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
 </body></html>
