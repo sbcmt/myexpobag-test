@@ -36,6 +36,14 @@ button.primary{background:#163847;color:white;border-color:#163847}button:disabl
 .variants>summary{font-size:13px;font-weight:750;color:#225169;cursor:pointer}.variant-grid{display:grid;grid-template-columns:minmax(125px,2fr) repeat(3,minmax(90px,1fr));gap:9px;align-items:end;padding:10px 0;border-top:1px solid #e1eaed}
 .variant-grid:first-of-type{margin-top:10px}.variant-name{font-size:12px;font-weight:650;overflow-wrap:anywhere}.hint{font-size:11px;color:#68808c;line-height:1.55;font-weight:400}
 .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:13px;align-items:center}
+.catalog-select{display:flex;gap:8px;align-items:center;font-size:12px;font-weight:750;white-space:nowrap}
+.catalog-select input{width:18px;height:18px}
+.delete-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:12px;margin-top:12px;background:#fff9f5;border:1px solid #eed3c9;border-radius:10px}
+.delete-toolbar button{background:#982e2e;color:white;border-color:#982e2e}
+.delete-toolbar button:disabled{background:#e7d8d3;border-color:#e7d8d3;color:#84736e}
+.catalog-selection-info{font-size:12px;color:#804334}
+.itemhead-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
 .empty{padding:30px;text-align:center;color:#5c7180}.warning{border-left:4px solid #d2a647;padding:10px 12px;background:#fff9e9;font-size:12px;line-height:1.7}
 footer{text-align:center;color:#82909a;font-size:11px;margin:25px 0}
 @media(max-width:780px){.form-grid{grid-template-columns:1fr 1fr}.toggle{grid-column:1/-1}.variant-grid{grid-template-columns:1fr 1fr}.variant-name{grid-column:1/-1}}
@@ -50,12 +58,15 @@ footer{text-align:center;color:#82909a;font-size:11px;margin:25px 0}
  <div class="toplinks"><a href="./products.html">＋ 商品を新規登録</a><a href="./products.html">商品詳細・CSVを編集</a><a href="./settings.html">ブランド設定</a></div>
  <section class="card" aria-labelledby="list-title"><div class="row"><div><h2 id="list-title" style="font-size:17px;margin:0">登録商品 <span id="total">0</span>件</h2><p class="lead">商品の表示状態・通常価格・キャンペーン価格・在庫数を一覧から変更できます。</p></div><button id="refresh" type="button">最新データを取得</button></div>
  <div class="filters"><div class="field"><label for="search">商品名・商品ID</label><input id="search" type="search" autocomplete="off" placeholder="商品名または商品ID"></div><div class="field"><label for="category">カテゴリ</label><select id="category"><option value="">すべて</option></select></div><div class="field"><label for="filter">表示状態</label><select id="filter"><option value="all">すべて</option><option value="visible">表示設定</option><option value="hidden">非表示設定</option><option value="pending">公開待ち・変更未反映</option><option value="reserved">予約商品あり</option></select></div></div>
- <p class="summary" id="results" aria-live="polite">読み込み中…</p><div class="warning">変更内容は「この商品の変更を保存」で管理データに保存されます。<strong>購入者ページへの反映は別操作</strong>です。在庫の変更も公開するまで購入者側には反映されません。</div>
+ <p class="summary" id="results" aria-live="polite">読み込み中…</p>
+ <div class="delete-toolbar"><label class="catalog-select"><input type="checkbox" id="select-visible" aria-label="表示中の商品をすべて選択">表示中をすべて選択</label><span id="delete-selected-count" class="catalog-selection-info">0件を選択中</span><button type="button" id="delete-selected" disabled>選択した商品を削除</button></div>
+ <p class="lead">削除は元に戻せません。公開済みの商品・未処理の注文・組合せ参照がある商品は、先に必要な解除操作をしてください。売上履歴は削除しません。</p>
+ <div class="warning">変更内容は「この商品の変更を保存」で管理データに保存されます。<strong>購入者ページへの反映は別操作</strong>です。在庫の変更も公開するまで購入者側には反映されません。</div>
  <div id="items"><div class="empty">登録商品を確認しています…</div></div></section>
  <section class="card"><div class="row"><div><h2 style="font-size:16px;margin:0">お客様ページへの反映</h2><p class="lead" id="publish-hint">公開状態を確認しています…</p></div><a href="./products.html" style="padding:12px 14px;background:#163847;color:white;text-decoration:none;border-radius:9px;font-weight:700;font-size:13px">公開操作の画面へ →</a></div></section>
  <p id="message" role="status" aria-live="polite" hidden class="status"></p>
 </div>
 <footer>© 2021–2026 Dobhar-chú</footer>
 </main>
-<script type="module" src="./catalog.js?asset=20261110-catalog-v1"></script>
+<script type="module" src="./catalog.js?asset=20261110-safe-delete-v2"></script>
 </body></html>

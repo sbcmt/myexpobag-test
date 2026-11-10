@@ -115,7 +115,7 @@
   let pendingReleaseBuild = '';
   const releaseCheckIntervalMs = 120_000;
 
-  const variantsOf = p => (Array.isArray(p.variants) ? p.variants : []).filter(v=>v && typeof v.code==='string' && typeof v.name==='string' && v.code);
+  const variantsOf = p => (Array.isArray(p.variants)?p.variants:[]).filter(v=>v && typeof v.code==='string' && v.code.trim()).map(v=>({...v,name:typeof v.name==='string'&&v.name.trim()?v.name:[v.axis1,v.axis2].filter(Boolean).join(' / ')||v.code}));
   const skuKey = (id,color='') => encodeURIComponent(id)+'::'+encodeURIComponent(color);
   const fromSkuKey = key => {
     const pos=key.indexOf('::');

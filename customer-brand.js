@@ -72,7 +72,7 @@ window.MEB_LOAD_CUSTOMER_BRAND = async function loadBrand(rawSlug) {
     typeof p.price==='number' && Number.isFinite(p.price) && p.price>=0 &&
     typeof p.categoryId==='string'
   ).map(p=>({...p,image:'./assets/product-placeholder.svg',
-    variants:Array.isArray(p.variants)?p.variants:[]})):[];
+    variants:Array.isArray(p.variants)?p.variants.filter(v=>v&&typeof v.code==='string'&&v.code.trim()).map(v=>({...v,name:typeof v.name==='string'&&v.name.trim()?v.name:[v.axis1,v.axis2].filter(Boolean).join(' / ')||v.code})):[]})):[];
   const allowedImages=new Set(Array.isArray(catalog?.publishedImageIds)?catalog.publishedImageIds:[]);
   const imagePromises=new Map();
   const validImage=data=>typeof data==='string'&&data.length<=109200&&/^data:image\/(?:jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(data);

@@ -19,7 +19,7 @@ const brandSettingsRef=()=>doc(db,'brandSettings',brand.slug);
 const trim=v=>String(v??'').trim();
 const yen=n=>'¥'+Number(n).toLocaleString('ja-JP');
 function status(message,error=false){const e=$('status');e.textContent=message;e.className='status'+(error?' error':'');e.hidden=false;}
-function refreshActionButtons(){for(const id of ['product-save','import-save','images-save','publish-catalog'])$(id).disabled=busy||imageProcessing||(id==='import-save'&&!importData)||(id==='images-save'&&!imagesReady.length);if(user)categoryOptions();}
+function refreshActionButtons(){for(const id of ['product-save','import-save','images-save','publish-catalog'])$(id).disabled=busy||imageProcessing||(id==='import-save'&&!importData)||(id==='images-save'&&!imagesReady.length);for(const b of document.querySelectorAll('.tab-save-button'))b.disabled=busy||imageProcessing;if(user)categoryOptions();}
 function setBusy(flag){busy=flag;refreshActionButtons();}
 function money(value,label,optional=false){
  const v=trim(value);if(optional&&v==='')return null;
@@ -469,6 +469,24 @@ function inputData(){
   price:$('product-price').value,eventPrice:$('product-event-price').value,variants:readVariants(id),variantAxes:axisSpec(),active:$('product-active').checked,noveltyTarget:noveltyIds.has(id),
   janCode:$('product-jan').value,stock:$('product-stock').value,...base,preorderAll:parentPreorderMode,combos:readCombos(id)});
 }
+let productDraftDirty=false;
+function markProductDraftDirty(){
+ productDraftDirty=true;
+ const node=$('tab-draft-status');if(node){node.dataset.dirty='true';node.dataset.saved='false';node.textContent='未保存の入力内容があります。どのタブの「この商品の全タブをまとめて保存」からでも、全項目を一括保存できます。';}
+}
+function markProductDraftClean(){
+ productDraftDirty=false;
+ const node=$('tab-draft-status');if(node){node.dataset.dirty='false';node.dataset.saved='true';node.textContent='商品全体の保存が完了しました。購入者ページへの表示には「お客様ページに反映」の操作が必要です。';}
+}
+// All non-CSV editor tabs belong to #product-form. Hidden tabs keep their DOM values.
+// Input, checkbox, dynamic SKU and reservation table changes share this same draft.
+const productEditor=$('product-form');
+productEditor.addEventListener('input',event=>{if(!event.target.closest('#panel-csv'))markProductDraftDirty();});
+productEditor.addEventListener('change',event=>{if(!event.target.closest('#panel-csv'))markProductDraftDirty();});
+for(const id of ['add-variant','add-combo','bulk-apply'])$(id).addEventListener('click',markProductDraftDirty);
+$('variant-rows').addEventListener('click',event=>{if(event.target.closest('button'))markProductDraftDirty();});
+$('combo-rows').addEventListener('click',event=>{if(event.target.closest('button'))markProductDraftDirty();});
+window.addEventListener('beforeunload',event=>{if(!productDraftDirty)return;event.preventDefault();event.returnValue='';});
 function selectProductTab(name){
  for(const b of document.querySelectorAll('[data-product-tab]')){const active=b.dataset.productTab===name;b.classList.toggle('active',active);b.setAttribute('aria-selected',active?'true':'false');b.tabIndex=active?0:-1;}
  for(const panel of document.querySelectorAll('.product-tab-panel'))panel.hidden=panel.id!=='panel-'+name;
@@ -630,14 +648,14 @@ function editProduct(id){
  $('product-jan').value=p.janCode||'';resetTotalStockState(p.stock??'');
  showCombos(existingCombos(p));$('product-active').checked=p.active!==false;
  pendingImages=[undefined,undefined];for(let slot=0;slot<2;slot++){ $(imageId('product-image',slot)).value='';$(imageId('product-image-delete',slot)).checked=false; }
- loadSavedImage(id,++imageRevision);$('edit-note').textContent='編集中：'+p.id+'（商品IDは変更できません）';selectProductTab('basic');$('product-form').scrollIntoView({behavior:'smooth',block:'start'});
+ loadSavedImage(id,++imageRevision);$('edit-note').textContent='編集中：'+p.id+'（商品IDは変更できません）';productDraftDirty=false;const draftMessage=$('tab-draft-status');if(draftMessage){draftMessage.dataset.dirty='false';draftMessage.dataset.saved='false';draftMessage.textContent='保存済み商品の編集中です。変更は各タブで保持され、どこから保存しても商品全体に反映されます。';}selectProductTab('basic');$('product-form').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function clearForm(){
  ++imageRevision;imageSlotRevision=[0,0];pendingImages=[undefined,undefined];imageTaskCount=0;imageProcessing=false;$('product-form').reset();totalAutoMode=false;manualTotalDraft='';reservationDrafts.clear();$('reservation-rows').replaceChildren();parentPreorderMode=false;$('product-preorder-all').checked=false;
  for(const id of ['axis1-name','axis2-name'])$(id).value='';
  showVariants();showCombos();$('product-id').readOnly=false;$('product-active').checked=true;$('edit-note').textContent='新規登録';
  for(let slot=0;slot<2;slot++){imagePreview('',slot);$(imageId('product-image-hint',slot)).textContent='画像未登録。';$(imageId('product-image',slot)).value='';$(imageId('product-image-delete',slot)).checked=false;}
- selectProductTab('basic');setBusy(busy);
+ selectProductTab('basic');setBusy(busy);productDraftDirty=false;const label=$('tab-draft-status');if(label){label.dataset.dirty='false';label.dataset.saved='false';label.textContent='この商品の入力内容は各タブで共通です。どのタブから保存しても、基本情報・画像・バリエーション・予約・組合せ商品をまとめて保存します。';}
 }
 function toFirestore(p,original){return {...p,createdAt:original?.createdAt||serverTimestamp(),updatedAt:serverTimestamp()};}
 async function saveProduct(event){
@@ -659,7 +677,7 @@ async function saveProduct(event){
    else if(old.exists())batch.delete(imageRef(p.id));
   }
   if(nextCategories.length!==categories.length)batch.set(catRef(),{categories:nextCategories,updatedAt:serverTimestamp()});
-  await batch.commit();const imageWasSaved=imageChange;if(imageWasSaved)imageKnown.add(p.id);products.set(p.id,{...products.get(p.id),...p});categories=nextCategories;markDraftPending();render();clearForm();status('「'+p.name+'」を'+(imageWasSaved?'画像とともに':'')+'保存しました。購入者ページには未反映です。上の「お客様ページに反映」を押してください。');
+  await batch.commit();const imageWasSaved=imageChange;if(imageWasSaved)imageKnown.add(p.id);products.set(p.id,{...products.get(p.id),...p});categories=nextCategories;markDraftPending();render();clearForm();markProductDraftClean();status('「'+p.name+'」の基本情報・画像・バリエーション'+p.variants.length+'種類・予約・組合せをまとめて保存しました。購入者ページへ反映するには上の「お客様ページに反映」を押してください。');
  }catch(err){console.error(err);status('商品を保存できませんでした（'+(err.code||'保存失敗')+'）：'+(err.message||'認証・Firestoreルール・通信環境をご確認ください。')+'。画像が原因と思われる場合は画像を外して再試行してください。',true);}finally{setBusy(false);}
 }
 async function addCategory(event){
@@ -677,11 +695,10 @@ async function removeCategory(name){
  catch(err){status('カテゴリの削除に失敗しました。',true);}finally{setBusy(false);}
 }
 async function deleteProduct(id){
- if(busy)return;const p=products.get(id);if(!p||!confirm('「'+p.name+'（'+id+'）」を削除しますか？'))return;
- setBusy(true);try{const batch=writeBatch(db);batch.delete(prodRef(id));batch.delete(imageRef(id));
-  const nextIds=[...noveltyIds].filter(productId=>productId!==id).sort();
-  if(brandSettingsExists&&noveltyIds.has(id))batch.set(brandSettingsRef(),{novelty:{productIds:nextIds,productId:nextIds[0]||''},updatedAt:serverTimestamp()},{merge:true});await batch.commit();noveltyIds=new Set(nextIds);products.delete(id);imageKnown.delete(id);markDraftPending();render();if($('product-id').value===id)clearForm();status('商品を削除しました。');}
- catch(err){console.error(err);status('商品を削除できませんでした。',true);}finally{setBusy(false);}
+ if(busy)return;
+ const p=products.get(id);if(!p)return;
+ if(!confirm('「'+p.name+'」の削除は「登録商品一覧」で安全確認後に行います。商品一覧を開きますか？'))return;
+ location.href='./catalog.html?delete='+encodeURIComponent(id);
 }
 // 商品一括登録はCSV専用。既存形式の見出しも読み取れるようにする。
 // 区分を分かりやすくするため、必須と条件付き必須を列名に明記する。
@@ -888,8 +905,17 @@ async function publishCatalog({automatic=false,allowBusy=false}={}){
     appliedStock={quantities:next,variantQuantities};
   });
   if(appliedStock){publishedStockQuantities=appliedStock.quantities;publishedVariantQuantities=appliedStock.variantQuantities;}
+  // Verify the public catalog contains every variant before reporting a successful publish.
+  const publicCheck=await getDocFromServer(doc(db,'publishedCatalogs',brand.slug));
+  if(!publicCheck.exists())throw Error('公開データを確認できません。もう一度公開してください。');
+  const confirmed=new Map((publicCheck.data().products||[]).map(p=>[p.id,p]));
+  for(const p of exposed){
+    const record=confirmed.get(p.id),expected=p.variants||[],received=record?.variants||[];
+    if(!record||expected.length!==received.length||expected.some(v=>!received.some(x=>x.code===v.code&&x.name===v.name)))
+      throw Error('バリエーションの公開検証に失敗：'+p.name+'。管理画面から公開操作をやり直してください。');
+  }
   publishedProductsById=new Map(exposed.map(p=>[p.id,p]));publishedBundles=[...pairs.values()];publishedCategories=categoriesPublic.map(c=>c.name);publishedCatalogAt=Date.now();hasPublishedSnapshot=true;forcePending=false;render();
-  message.textContent='公開しました：商品'+exposed.length+'件／商品画像'+uploaded.length+'枚。右のリンクからお客様ページを確認してください。';
+  message.textContent='公開しました：商品'+exposed.length+'件／バリエーション'+exposed.reduce((n,p)=>n+(p.variants?.length||0),0)+'種類／商品画像'+uploaded.length+'枚。右のリンクからお客様ページを確認してください。';
   message.className='status';
   return true;
  }catch(error){

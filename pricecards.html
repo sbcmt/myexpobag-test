@@ -23,7 +23,7 @@
   .sheet{width:210mm;height:297mm;padding:7mm 12mm;display:grid;grid-template-columns:repeat(2,91mm);grid-template-rows:repeat(5,55mm);column-gap:4mm;row-gap:2mm;break-after:page;page-break-after:always}
   .sheet:last-child{break-after:auto;page-break-after:auto}
   .pricecard{width:91mm;height:55mm;border:.25mm solid #c9d3d8;position:relative;overflow:hidden;display:flex;background:#fff;break-inside:avoid}
-  .pricecard.unpublished::after{content:"未反映";position:absolute;top:0;right:0;padding:1.5mm 3mm;background:#ac2e35;color:#fff;font-size:8pt;font-weight:800;z-index:3}
+  .pricecard.unpublished::after{content:"未公開";position:absolute;top:0;right:0;padding:1.5mm 3mm;background:#ac2e35;color:#fff;font-size:8pt;font-weight:800;z-index:3}
   .qr-area{width:31mm;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3mm 2mm;gap:1mm}
   .qr-area img{width:25.5mm;height:25.5mm;image-rendering:pixelated}
   .scan-note{font-size:6pt;color:#65767c;white-space:nowrap;text-align:center}
@@ -31,9 +31,9 @@
   .brand{font-size:7.4pt;font-weight:800;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .item{font-size:11pt;font-weight:800;line-height:1.18;word-break:break-word;max-height:12mm;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:7mm}
   .meta{font-size:7.4pt;color:#536470;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .price{margin-top:0;min-height:auto;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:.5mm}
+  .price{margin-top:0;min-height:auto;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:.25mm}
   .normal{font-size:7pt;color:#6c7a80;text-align:center}
-  .normal.strike{text-decoration:line-through}
+  .normal.strike{text-decoration:line-through;text-decoration-thickness:1.1px;font-size:8pt;color:#5e6b70}.campaign-label{font-size:6.8pt;line-height:1.2;font-weight:800;color:#b42b28;white-space:nowrap}
   .now{font-size:14pt;font-weight:800;letter-spacing:-.025em;white-space:nowrap;text-align:center}
   .now.event{color:#b42b28}.now small{font-size:7pt;font-weight:700;margin-right:1.5mm}
   .title-stack{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:9mm;max-width:100%;gap:.5mm}
@@ -69,7 +69,7 @@
 <p class="notice" id="pricecards-notice" role="status" aria-live="polite">商品情報を読み込み中…</p>
 <div id="paper-output"></div>
 <script src="./firebase-config.js"></script><script src="./qr.js"></script>
-<script src="./pricecards-live.js?asset=20261110-brand-accent-v1" type="module"></script>
+<script src="./pricecards-live.js?asset=20261110-promo-normal-v2" type="module"></script>
 <div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
 </body>
 </html>

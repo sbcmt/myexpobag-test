@@ -32,10 +32,11 @@ function makeQr(url){
  return c.toDataURL('image/png');
 }
 // Mirror customer app.js: variants have their own regular/event prices.
-function priceFor(product,variant){
+function priceBreakdown(product,variant){
  const regular=Number.isFinite(variant?.price)?variant.price:product.price;
  const event=Number.isFinite(variant?.eventPrice)?variant.eventPrice:product.eventPrice;
- return Number.isFinite(event)&&event>=0&&event<regular?event:regular;
+ const promotion=Number.isFinite(event)&&event>=0&&event<regular;
+ return {regular,now:promotion?event:regular,promotion};
 }
 function effectiveReservation(product,variant){
  return typeof variant?.preorder==='boolean'?variant.preorder:product.preorder===true;
@@ -51,10 +52,19 @@ function cardFor({product,published}){
  const titleWrap=document.createElement('div');titleWrap.className='title-stack';
  if(product.preorder===true){const badge=document.createElement('span');badge.className='reservation-badge product-reservation';badge.textContent='受注予約';titleWrap.append(badge);}
  const name=document.createElement('div');name.className='item';name.textContent=product.name;titleWrap.append(name);
- const candidatePrices=(variants.length?variants:[null]).map(v=>priceFor(product,v));
- const minimum=Math.min(...candidatePrices),different=new Set(candidatePrices).size>1;
+ const pricesByVariant=(variants.length?variants:[null]).map(v=>priceBreakdown(product,v));
+ const promotional=pricesByVariant.filter(p=>p.promotion);
+ // Show a real, matching before/after price pair from the SAME variant.
+ // Never strike through the price of a different variant (misleading discount).
+ const pricedRows=promotional.length?promotional:pricesByVariant;
+ const display=pricedRows.reduce((best,p)=>p.now<best.now?p:best,pricedRows[0]);
+ const varied=pricesByVariant.length>1&&pricesByVariant.some(p=>p.now!==display.now);
  const prices=document.createElement('div');prices.className='price';
- const now=document.createElement('div');now.className='now';now.textContent=yen(minimum)+(different?'～':'');prices.append(now);
+ if(display.promotion){
+   const old=document.createElement('div');old.className='normal strike';old.textContent='通常価格 '+yen(display.regular);prices.append(old);
+   const caption=document.createElement('div');caption.className='campaign-label';caption.textContent=variants.length>1?'キャンペーン価格（対象種類）':'キャンペーン価格';prices.append(caption);
+ }
+ const now=document.createElement('div');now.className='now'+(display.promotion?' event':'');now.textContent=yen(display.now)+(varied?'～':'');prices.append(now);
  info.append(brand,titleWrap,prices);
  if(variants.length){
   const names=document.createElement('div');names.className='variant-list';

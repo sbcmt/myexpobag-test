@@ -1,11 +1,13 @@
 /** MY EXPO BAG — authenticated, draft-only quick editing. All public changes need explicit publishing. */
 import {initializeApp,getApps,getApp} from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
 import {getAuth,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
-import {getFirestore,doc,getDoc,getDocsFromServer,getDocFromServer,collection,runTransaction,serverTimestamp} from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
+import {getFirestore,doc,getDoc,getDocsFromServer,getDocFromServer,collection,query,where,runTransaction,serverTimestamp} from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 const $=id=>document.getElementById(id);
 const config=window.MEB_FIREBASE_CONFIG||{};
 const MAX_PRICE=100000000;
 let db,user,brand,products=[],published=new Map(),publicStock=null,publishedExists=false,busy=false;
+const selectedProductIds=new Set();
+let visibleProductIds=[];
 const text=v=>String(v??'');
 const yen=n=>'¥'+Number(n||0).toLocaleString('ja-JP');
 const emptyStock=n=>n===null||n===undefined?'':String(n);
@@ -60,6 +62,18 @@ function addVariantEditor(details,v,p){
  const stock=field(kind==='reservationStock'?'予約在庫':'通常在庫','v-stock',emptyStock(v[kind]),{placeholder:'空欄＝無制限'});
  row.append(title,price,event,stock);details.append(row);
 }
+function updateDeleteSelection(){
+ const ids=new Set(products.map(p=>p.id));
+ for(const id of [...selectedProductIds])if(!ids.has(id))selectedProductIds.delete(id);
+ const checkbox=$('select-visible');
+ const count=visibleProductIds.filter(id=>selectedProductIds.has(id)).length;
+ checkbox.checked=visibleProductIds.length>0&&count===visibleProductIds.length;
+ checkbox.indeterminate=count>0&&count<visibleProductIds.length;
+ checkbox.disabled=busy||!visibleProductIds.length;
+ $('delete-selected').disabled=busy||selectedProductIds.size===0;
+ $('delete-selected-count').textContent=selectedProductIds.size+'件を選択中';
+ document.querySelectorAll('.item .catalog-select input').forEach(input=>{input.checked=selectedProductIds.has(input.value);input.disabled=busy;});
+}
 function draw(){
  $('total').textContent=products.length;
  const categories=[...new Set(products.map(p=>p.categoryName).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ja'));
@@ -76,16 +90,23 @@ function draw(){
   return true;
  }).sort((a,b)=>a.id.localeCompare(b.id,'ja'));
  $('results').textContent=found.length+'件を表示／登録'+products.length+'件';
+ visibleProductIds=found.map(p=>p.id);
  $('publish-hint').textContent=products.some(pending)?'購入者ページに未反映の変更があります。公開操作を行ってください。':'登録商品の変更は公開済みです。';
  const container=$('items');container.replaceChildren();
- if(!found.length){const e=document.createElement('div');e.className='empty';e.textContent=products.length?'条件に合う商品がありません。':'まだ商品は登録されていません。「＋ 商品を新規登録」から登録できます。';container.append(e);return;}
+ if(!found.length){const e=document.createElement('div');e.className='empty';e.textContent=products.length?'条件に合う商品がありません。':'まだ商品は登録されていません。「＋ 商品を新規登録」から登録できます。';container.append(e);updateDeleteSelection();return;}
  for(const p of found){
   const form=document.createElement('form');form.className='item';form.dataset.productId=p.id;
   const head=document.createElement('div');head.className='itemhead';
   const hgroup=document.createElement('div');const title=document.createElement('p');title.className='item-name';title.textContent=p.name;const meta=document.createElement('p');meta.className='item-info';meta.textContent=p.categoryName+' ／ 商品ID：'+p.id+' ／ '+((p.variants||[]).length?p.variants.length+'種類のバリエーション':'単品商品');hgroup.append(title,meta);
   const pills=document.createElement('div');pills.className='pills';pills.append(stateBadge(p.active===false?'非表示設定':pending(p)?'公開待ち・変更未反映':'公開済み',p.active===false?'off':pending(p)?'pending':'ok'));
   if(p.preorder===true||(p.variants||[]).some(v=>v.preorder===true))pills.append(stateBadge('予約販売あり',''));
-  head.append(hgroup,pills);
+  const right=document.createElement('div');right.className='itemhead-right';
+  const selectLabel=document.createElement('label');selectLabel.className='catalog-select';
+  const select=document.createElement('input');select.type='checkbox';select.className='p-select';select.value=p.id;select.checked=selectedProductIds.has(p.id);
+  select.setAttribute('aria-label','「'+p.name+'」を削除対象に選択');
+  select.addEventListener('change',()=>{if(select.checked)selectedProductIds.add(p.id);else selectedProductIds.delete(p.id);updateDeleteSelection();});
+  const selectText=document.createElement('span');selectText.textContent='選択';selectLabel.append(select,selectText);right.append(pills,selectLabel);
+  head.append(hgroup,right);
   const fields=document.createElement('div');fields.className='form-grid';
   const label=document.createElement('label');label.className='toggle';const chk=document.createElement('input');chk.type='checkbox';chk.className='p-active';chk.checked=p.active!==false;const labelText=document.createElement('span');labelText.textContent='表示対象にする';label.append(chk,labelText);fields.append(label);
   fields.append(field('通常価格（税込）','p-price',p.price));
@@ -98,6 +119,7 @@ function draw(){
   const actions=document.createElement('div');actions.className='actions';const edit=document.createElement('a');edit.href='./products.html?edit='+encodeURIComponent(p.id);edit.textContent='詳細編集';edit.style.cssText='font-size:13px;color:#175878;text-decoration:underline;padding:9px';const save=document.createElement('button');save.className='primary';save.type='submit';save.textContent='この商品の変更を保存';actions.append(edit,save);form.append(actions);
   form.addEventListener('submit',event=>saveRow(event,p,form));container.append(form);
  }
+ updateDeleteSelection();
 }
 function changedFields(form,p){
  const payload={};const get=(name)=>form.querySelector('.'+name);
@@ -168,10 +190,97 @@ async function refresh(){
   getDocFromServer(doc(db,'publishedCatalogs',brand.slug)),
   getDocFromServer(doc(db,'publishedStock',brand.slug))
  ]);
- products=drafts.docs.map(d=>({...d.data(),id:d.id}));publishedExists=pub.exists();published=new Map((pub.data()?.products||[]).map(p=>[p.id,p]));publicStock=stock.exists()?stock.data():null;draw();
+ products=drafts.docs.map(d=>({...d.data(),id:d.id}));publishedExists=pub.exists();published=new Map((pub.data()?.products||[]).map(p=>[p.id,p]));publicStock=stock.exists()?stock.data():null;const initialDelete=new URLSearchParams(location.search).get('delete');if(initialDelete&&products.some(p=>p.id===initialDelete)){selectedProductIds.add(initialDelete);history.replaceState(null,'',location.pathname);$('search').value=initialDelete;}draw();
 }
-$('search').addEventListener('input',draw);$('category').addEventListener('change',draw);$('filter').addEventListener('change',draw);
-$('refresh').addEventListener('click',async()=>{if(busy)return;try{await refresh();message('最新の商品データを読み込みました。');}catch(error){message('再読込に失敗しました：'+errText(error),true);}});
+// Deletes are deliberately limited to *unpublished* items.
+// First unpublish in products.html and confirm the public catalog was updated.
+// Existing customer orders are retained as independent historical snapshots.
+function idInOrder(order,id){
+ const lines=Array.isArray(order.remainingLines)?order.remainingLines:(Array.isArray(order.items)?order.items:[]);
+ return lines.some(item=>item?.id===id||item?.productId===id);
+}
+function comboReferences(product,ids){
+ const combo=Array.isArray(product.combos)?product.combos:[];
+ return combo.some(x=>ids.has(x.productId))||(typeof product.comboProductId==='string'&&ids.has(product.comboProductId));
+}
+function refsInPublic(snapshot,ids){
+ const data=snapshot.data()||{};
+ return (data.products||[]).some(p=>ids.has(p.id))||
+  (data.publishedImageIds||[]).some(id=>ids.has(id))||
+  (data.bundles||[]).some(b=>(b.productIds||[]).some(id=>ids.has(id)));
+}
+async function deleteSelected(){
+ if(busy||!user||!brand)return;
+ const ids=[...selectedProductIds].sort();if(!ids.length)return;
+ if(ids.length>50){message('一度に削除できる商品は50件までです。選択数を減らしてください。',true);return;}
+ const selected=ids.map(id=>products.find(p=>p.id===id));
+ if(selected.some(p=>!p)){message('商品一覧が変更されました。最新データを取得してください。',true);return;}
+ const details=selected.map(p=>'・'+p.name+'［'+p.id+'］').join('\n');
+ if(!confirm('以下の'+ids.length+'商品をFirestoreから完全削除します。画像データも削除し、元に戻せません。\n\n'+details+'\n\n※注文履歴は残します。\n続行しますか？'))return;
+ if(prompt('誤削除を防ぐため「削除」と入力してください。')!=='削除')return;
+ busy=true;message('削除前の安全確認をしています…');updateDeleteSelection();
+ try{
+  // Verify *server* state, not stale client cache. No product may still be public.
+  const [drafts,publicSnap,orderSnap,settingsSnap]=await Promise.all([
+   getDocsFromServer(collection(db,'brands',user.uid,'products')),
+   getDocFromServer(doc(db,'publishedCatalogs',brand.slug)),
+   getDocsFromServer(query(collection(db,'brands',user.uid,'scannedOrders'),where('status','==','reserved'))),
+   getDocFromServer(doc(db,'brandSettings',brand.slug))
+  ]);
+  if(refsInPublic(publicSnap,new Set(ids)))throw Error('購入者ページに掲載中の商品が含まれています。該当商品を「非表示」にして「お客様ページに反映」を完了してから削除してください。');
+  const rows=drafts.docs.map(d=>({id:d.id,...d.data()}));
+  for(const id of ids){if(!rows.some(p=>p.id===id))throw Error('商品「'+id+'」が既に削除されています。最新データを取得してください。');}
+  const cross=rows.filter(p=>!ids.includes(p.id)&&comboReferences(p,new Set(ids)));
+  if(cross.length)throw Error('ほかの商品（'+cross.map(p=>p.name).join('、')+'）が組合せ販売で参照しています。先にその組合せを解除してください。');
+  const active=orderSnap.docs.find(d=>ids.some(id=>idInOrder(d.data(),id)));
+  if(active)throw Error('未処理の注文がある商品は削除できません。受注確認で受渡し・取消を完了してください。');
+  const currentSettings=settingsSnap.exists()?settingsSnap.data():null;
+  if(currentSettings?.banner?.linkMode==='product'&&ids.includes(currentSettings.banner.linkValue))throw Error('ブランド設定のバナーリンク先に指定されています。先にバナーのリンク先を変更してください。');
+  const refs=ids.map(id=>doc(db,'brands',user.uid,'products',id));
+  const catalogRef=doc(db,'publishedCatalogs',brand.slug),stockRef=doc(db,'publishedStock',brand.slug),settingsRef=doc(db,'brandSettings',brand.slug);
+  await runTransaction(db,async tx=>{
+   // All transaction reads come before writes. Validate current server version,
+   // publication and brand references again before removing any document.
+   const [pub,stock,settings,...snapshotProducts]=await Promise.all([
+    tx.get(catalogRef),tx.get(stockRef),tx.get(settingsRef),...refs.map(ref=>tx.get(ref))
+   ]);
+   if(refsInPublic(pub,new Set(ids)))throw Error('公開データが更新されました。最新状態で非表示を反映してください。');
+   for(let i=0;i<ids.length;i++){
+    if(!snapshotProducts[i].exists())throw Error('商品が既に削除されています。');
+    const live=snapshotProducts[i].data(),expected=selected[i];
+    if(live.updatedAt?.isEqual&&expected.updatedAt?.isEqual&&!live.updatedAt.isEqual(expected.updatedAt))throw Error('商品「'+ids[i]+'」は別の操作で更新されています。一覧を再取得してください。');
+   }
+   if(settings.exists()&&settings.data().banner?.linkMode==='product'&&ids.includes(settings.data().banner.linkValue))throw Error('バナーの参照先を変更してから削除してください。');
+   for(let i=0;i<ids.length;i++){
+    const id=ids[i];tx.delete(refs[i]);
+    tx.delete(doc(db,'brands',user.uid,'productImages',id));
+    // Remove a possible orphan public photo left by a previous publication.
+    tx.delete(doc(db,'publishedCatalogs',brand.slug,'images',id));
+   }
+   if(stock.exists()){
+    const old=stock.data();const quantities={...(old.quantities||{})},variantQuantities={...(old.variantQuantities||{})};
+    for(const id of ids){delete quantities[id];for(const key of Object.keys(variantQuantities))if(key.startsWith(id+'::'))delete variantQuantities[key];}
+    tx.update(stockRef,{quantities,variantQuantities,updatedAt:serverTimestamp()});
+   }
+   if(settings.exists()){
+    const d=settings.data(),n=d.novelty||{},oldIds=Array.isArray(n.productIds)?n.productIds:(n.productId?[n.productId]:[]),nextIds=oldIds.filter(id=>!ids.includes(id));
+    if(nextIds.length!==oldIds.length||ids.includes(n.productId)){
+     tx.update(settingsRef,{novelty:{...n,productIds:nextIds,productId:nextIds[0]||'',...(n.mode==='product'&&!nextIds.length?{mode:'none'}:{})},updatedAt:serverTimestamp()});
+    }
+   }
+  });
+  selectedProductIds.clear();
+  try{await refresh();message(ids.length+'件の商品をFirestoreから削除しました（商品・商品画像・残存していた公開画像）。注文履歴は保持しています。');}
+  catch(reloadError){console.warn('削除後の一覧再取得に失敗',reloadError);message(ids.length+'件の商品削除は完了しました。一覧の再読み込みに失敗したため、ページを更新して最新の状態を確認してください。');}
+ }catch(error){console.error('selected product delete',error);message('削除できませんでした：'+errText(error),true);}
+ finally{busy=false;updateDeleteSelection();}
+}
+$('select-visible').addEventListener('change',event=>{
+ for(const id of visibleProductIds){if(event.target.checked)selectedProductIds.add(id);else selectedProductIds.delete(id);}updateDeleteSelection();
+});
+$('delete-selected').addEventListener('click',deleteSelected);
+for(const [id,event] of [['search','input'],['category','change'],['filter','change']])$(id).addEventListener(event,()=>{selectedProductIds.clear();draw();});
+$('refresh').addEventListener('click',async()=>{if(busy)return;try{selectedProductIds.clear();await refresh();message('最新の商品データを読み込みました。');}catch(error){message('再読込に失敗しました：'+errText(error),true);}});
 if(!['apiKey','authDomain','projectId','appId'].every(k=>typeof config[k]==='string'&&config[k].trim())){
  $('loading').textContent='Firebase接続設定を確認してください。';document.documentElement.classList.remove('auth-pending');
 }else try{
