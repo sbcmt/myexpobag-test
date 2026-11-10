@@ -40,6 +40,8 @@
   .reservation-badge{display:inline-block;background:#d82f38;color:white!important;font-weight:900;line-height:1.25;border-radius:1mm;white-space:nowrap;vertical-align:middle}
   .product-reservation{font-size:7pt;padding:.5mm 2.3mm;margin:0 auto}
   .variant-reservation{font-size:5pt;padding:.15mm .8mm;margin-left:.6mm}
+  /* Variation-specific campaign exclusion. No asset or logo changes. */
+  .discount-excluded-badge{display:inline-block;font-size:5pt;font-weight:800;line-height:1.25;padding:.13mm .7mm;border:.2mm solid #a46b31;border-radius:1mm;color:#7e4c20;background:#fff5e7;white-space:nowrap;margin-left:.5mm}
   .variant-list{width:100%;margin-top:.8mm;display:flex;align-content:flex-start;justify-content:center;flex-wrap:wrap;gap:.8mm 1.1mm;overflow:hidden;flex:1;max-height:24mm}
   .variant-name{font-size:7pt;color:#364955;display:inline-flex;gap:.1mm;align-items:center;white-space:normal;overflow-wrap:anywhere;text-align:left;line-height:1.15}
   .variant-list.dense .variant-name{font-size:6.1pt}
@@ -69,7 +71,7 @@
 <p class="notice" id="pricecards-notice" role="status" aria-live="polite">商品情報を読み込み中…</p>
 <div id="paper-output"></div>
 <script src="./firebase-config.js"></script><script src="./qr.js"></script>
-<script src="./pricecards-live.js?asset=20261110-promo-normal-v2" type="module"></script>
+<script src="./pricecards-live.js?asset=20261110-preorder-price-exclusion-v1" type="module"></script>
 <div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
 </body>
 </html>

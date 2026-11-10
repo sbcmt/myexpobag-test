@@ -31,15 +31,19 @@ function makeQr(url){
  ctx.fillStyle='#111';for(let r=0;r<n;r++)for(let col=0;col<n;col++)if(qr.isDark(r,col))ctx.fillRect((col+border)*pixel,(r+border)*pixel,pixel,pixel);
  return c.toDataURL('image/png');
 }
-// Mirror customer app.js: variants have their own regular/event prices.
+// Price cards must show the SAME price that customer BAG and staff QR settlement use.
+function effectiveReservation(product,variant){
+ return typeof variant?.preorder==='boolean'?variant.preorder:product.preorder===true;
+}
 function priceBreakdown(product,variant){
  const regular=Number.isFinite(variant?.price)?variant.price:product.price;
  const event=Number.isFinite(variant?.eventPrice)?variant.eventPrice:product.eventPrice;
- const promotion=Number.isFinite(event)&&event>=0&&event<regular;
- return {regular,now:promotion?event:regular,promotion};
-}
-function effectiveReservation(product,variant){
- return typeof variant?.preorder==='boolean'?variant.preorder:product.preorder===true;
+ const hasCampaign=Number.isFinite(event)&&event>=0&&event<regular;
+ // Only preorders can opt out of an otherwise valid campaign price.
+ const excluded=hasCampaign&&effectiveReservation(product,variant)
+   && (variant?.reservationPriceMode||product.reservationPriceMode||'normal')!=='campaign';
+ const promotion=hasCampaign&&!excluded;
+ return {regular,now:promotion?event:regular,promotion,excluded};
 }
 function cardFor({product,published}){
  const el=document.createElement('article');el.className='pricecard '+style+(published?'':' unpublished');
@@ -79,6 +83,11 @@ function cardFor({product,published}){
    if(effectiveReservation(product,variant)&&product.preorder!==true){
     const badge=document.createElement('span');badge.className='reservation-badge variant-reservation';badge.textContent='受注予約';chip.append(badge);
    }
+   // If this SKU has a campaign price but sells at its regular reservation price,
+   // clearly mark only THIS SKU as excluded from the campaign discount.
+   if(priceBreakdown(product,variant).excluded){
+    const excluded=document.createElement('span');excluded.className='discount-excluded-badge';excluded.textContent='割引対象外';chip.append(excluded);
+   }
    names.append(chip);
   }
   info.append(names);
@@ -109,10 +118,12 @@ else{
     setAccent(settingDoc.data()?.theme?.preset||'natural');
     const publicRecords=new Map((pub.data()?.products||[]).map(p=>[p.id,p]));
     const priceMatches=(p,r)=>{
-      if(!r||p.active===false||p.name!==r.name||p.price!==r.price||(p.eventPrice??null)!==(r.eventPrice??null))return false;
+      if(!r||p.active===false||p.name!==r.name||p.price!==r.price||(p.eventPrice??null)!==(r.eventPrice??null)
+        ||(p.preorder===true)!==(r.preorder===true)||(p.reservationPriceMode||'normal')!==(r.reservationPriceMode||'normal'))return false;
       const vars=p.variants||[],live=r.variants||[];
       if(vars.length!==live.length)return false;
-      return vars.every(v=>{const other=live.find(x=>x.code===v.code);return !!other&&(v.price??null)===(other.price??null)&&(v.eventPrice??null)===(other.eventPrice??null);});
+      return vars.every(v=>{const other=live.find(x=>x.code===v.code);return !!other&&(v.price??null)===(other.price??null)&&(v.eventPrice??null)===(other.eventPrice??null)
+        &&(v.preorder===true)===(other.preorder===true)&&(v.reservationPriceMode||'normal')===(other.reservationPriceMode||'normal');});
     };
     const all=drafts.docs.map(s=>s.data()).filter(p=>p&&typeof p.id==='string'&&typeof p.name==='string');
     const selected=ids.size?all.filter(p=>ids.has(p.id)):all;

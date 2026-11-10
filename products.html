@@ -23,7 +23,7 @@
 .product-tab-panel[hidden]{display:none!important}.product-tab-panel{padding:5px 0 16px;min-height:200px}.tab-description{font-size:13px;color:#597280;margin:2px 0 16px}
 .editor-actions{border-top:1px solid #e0e9ed;padding-top:17px;margin-top:8px}
 .axis-grid,.photo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.axis-box,.photo-slot{border:1px solid #dbe6ec;border-radius:11px;padding:14px;background:#f7fafb}.photo-slot{display:flex;flex-direction:column;gap:10px}.photo-slot input[type=file]{max-width:100%;font-size:12px}.photo-slot .photo-preview{height:145px;width:100%;object-fit:contain}
-.variant-jan-row{margin-top:8px}.reservation-scroller{overflow-x:auto;border:1px solid #dce6ec;border-radius:11px}.reservation-table{width:100%;border-collapse:collapse;font-size:12px;min-width:810px}.reservation-table th,.reservation-table td{text-align:left;border-bottom:1px solid #e4edf0;padding:11px 8px;vertical-align:middle}.reservation-table thead{background:#edf4f7;color:#305264}.reservation-table th:nth-child(4){min-width:240px}.reservation-table td:nth-child(4) .reservation-date{display:flex;gap:4px;flex-wrap:nowrap;white-space:nowrap;align-items:center;min-width:244px}.reservation-table select,.reservation-table input[type=number]{width:100%;border:1px solid #b9cbd6;border-radius:7px;font:inherit;background:#fff;padding:8px 5px;color:#1b3948}.reservation-table .reservation-year{width:80px;min-width:80px}.reservation-table .reservation-month{width:66px;min-width:66px}.reservation-table .reservation-period{width:84px;min-width:84px}.reservation-table input[type=checkbox]{width:18px;height:18px;accent-color:#135476}.reservation-table input:disabled,.reservation-table select:disabled{background:#f1f4f6;color:#87959c}
+.variant-jan-row{margin-top:8px}.reservation-scroller{overflow-x:auto;border:1px solid #dce6ec;border-radius:11px}.reservation-table{width:100%;border-collapse:collapse;font-size:12px;min-width:920px}.reservation-table th,.reservation-table td{text-align:left;border-bottom:1px solid #e4edf0;padding:11px 8px;vertical-align:middle}.reservation-table thead{background:#edf4f7;color:#305264}.reservation-table th:nth-child(4){min-width:240px}.reservation-table td:nth-child(4) .reservation-date{display:flex;gap:4px;flex-wrap:nowrap;white-space:nowrap;align-items:center;min-width:244px}.reservation-table select,.reservation-table input[type=number]{width:100%;border:1px solid #b9cbd6;border-radius:7px;font:inherit;background:#fff;padding:8px 5px;color:#1b3948}.reservation-table .reservation-year{width:80px;min-width:80px}.reservation-table .reservation-month{width:66px;min-width:66px}.reservation-table .reservation-period{width:84px;min-width:84px}.reservation-table input[type=checkbox]{width:18px;height:18px;accent-color:#135476}.reservation-table input:disabled,.reservation-table select:disabled{background:#f1f4f6;color:#87959c}
 @media(max-width:600px){.product-tabs{display:flex;overflow-x:auto;scroll-snap-type:x mandatory}.product-tabs button{flex:0 0 auto;min-width:98px;scroll-snap-align:start}.axis-grid,.photo-grid{grid-template-columns:1fr}.product-tab-panel{min-height:0}}
 
 .variant-table-scroller{overflow-x:auto;border:1px solid #dce5ea;border-radius:11px;margin:12px 0 9px}
@@ -72,6 +72,14 @@
 .tab-draft-status[data-saved="true"]{background:#eaf7ef;border-color:#b9dec8;color:#24643c}
 .tab-save-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:20px 0 3px;padding:14px 0 0;border-top:1px solid #e0e9ef}
 .tab-save-actions .muted{font-size:11px}
+
+/* 予約販売：年・月・時期は横一列。予約在庫をコンパクトにして価格選択を追加。 */
+.reservation-table th:nth-child(5),.reservation-table td:nth-child(5){width:88px;min-width:88px;max-width:88px}
+.reservation-table .reservation-stock{width:72px!important;min-width:0;text-align:right;font-variant-numeric:tabular-nums}
+.reservation-table th:nth-child(6),.reservation-table td:nth-child(6){min-width:172px;width:172px}
+.reservation-table .reservation-price-mode{width:160px;min-width:150px;max-width:180px;white-space:nowrap}
+.reservation-table .reservation-price-amount{margin-top:3px;font-size:11px;font-variant-numeric:tabular-nums;color:#446273;white-space:nowrap}
+.reservation-table td:nth-child(4) .reservation-date{min-width:244px;flex-wrap:nowrap}
 </style><style id="meb-copyright-style">.meb-copyright{box-sizing:border-box;display:block;margin:16px auto 24px;padding:10px 14px;text-align:center;color:#8c98a0;font:11px/1.7 -apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;letter-spacing:.025em}@media print{.meb-copyright{display:none!important}}</style><link rel="stylesheet" href="./admin-navigation.css?v=20261016-v114"/>
 </head>
 <body>
@@ -160,7 +168,7 @@
  <div class="field"><label for="bulk-period">時期</label><select id="bulk-period"><option value="">選択</option><option>上旬</option><option>中旬</option><option>下旬</option></select></div>
  <button id="bulk-apply" type="button" class="primary">予約対象に一括適用</button>
 </div>
-<div class="reservation-scroller"><table class="reservation-table"><thead><tr><th scope="col">商品名</th><th scope="col">バリエーション</th><th scope="col">予約可否</th><th scope="col">発売予定（年・月・時期）</th><th scope="col">予約品在庫数</th></tr></thead><tbody id="reservation-rows"></tbody></table></div>
+<div class="reservation-scroller"><table class="reservation-table"><thead><tr><th scope="col">商品名</th><th scope="col">バリエーション</th><th scope="col">予約可否</th><th scope="col">発売予定（年・月・時期）</th><th scope="col">予約品在庫数</th><th scope="col">予約販売時価格</th></tr></thead><tbody id="reservation-rows"></tbody></table></div>
 <p class="hint">発売予定は1行で表示します。予約品在庫数はバリエーションタブの在庫数と自動同期します（予約チェック中のみ）。一括設定は予約対象の発売予定だけに反映します。</p>
 
 <div class="tab-save-actions"><button type="submit" class="primary tab-save-button">この商品の全タブをまとめて保存</button><span class="muted">画像・予約・バリエーションも同時保存</span></div>
@@ -219,6 +227,6 @@
   },15000);
 })();
 </script>
-<script onerror="window.MEB_PRODUCTS_STARTUP_ERROR?.()" src="./products.js?asset=20261110-unified-draft-v2" type="module"></script>
+<script onerror="window.MEB_PRODUCTS_STARTUP_ERROR?.()" src="./products.js?asset=20261110-preorder-pricing-v1" type="module"></script>
 <div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
 </body></html>

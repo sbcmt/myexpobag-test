@@ -35,6 +35,7 @@
     const variant=selectedVariant(p,code);
     const normal=normalPrice(p,code);
     const special=variant && Number.isFinite(variant.eventPrice)?variant.eventPrice:p.eventPrice;
+    if(isPreorder(p,code) && (variant?.reservationPriceMode||p.reservationPriceMode||'normal')!=='campaign')return normal;
     return Number.isFinite(special)&&special>=0&&special<normal?special:normal;
   };
   const fromPrice=(p)=>{

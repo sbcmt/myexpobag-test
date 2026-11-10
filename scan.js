@@ -47,6 +47,8 @@ function priceFor(p,code){
  const v=codeFor(p,code);
  const normal=Number.isInteger(v?.price)?v.price:p.price;
  const event=Number.isInteger(v?.eventPrice)?v.eventPrice:p.eventPrice;
+ const preorder=typeof v?.preorder==='boolean'?v.preorder:p.preorder===true;
+ if(preorder&&(v?.reservationPriceMode||p.reservationPriceMode||'normal')!=='campaign')return normal;
  return Number.isInteger(event)&&event>=0&&event<normal?event:normal;
 }
 function parseOrder(text){
@@ -114,13 +116,10 @@ function calculate(parsed,catalog,settings={}){
  if(!Number.isInteger(raw.a)||raw.s!==base||raw.p!==percent||raw.d!==reduction||raw.a!==finalAmount)throw Error('QRの金額と公開中の割引設定が一致しません。QRを再発行してください。');
  const n=settings?.novelty||{};
  const noveltyMode=['all','minimum','product'].includes(n.mode)?n.mode:'none';
- const noveltyProductIds=noveltyMode==='product'?[...new Set((Array.isArray(n.productIds)?n.productIds:[n.productId]).filter(id=>typeof id==='string'&&/^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$/.test(id)))].slice(0,300):[];
  return {details,amount:finalAmount,discountMode:registered?mode:'none',discountValue:registered?value:0,discountMinSpend:minSpend,discountRegistered:registered,discountApplyToPreorder:applyToPreorder,
    hasPreorder,shippingFee,shippingMode:shipMode,shippingThreshold:shipThreshold,shippingCharge:shipCharge,shippingPrefecture,
-   noveltyMode,noveltyName:noveltyMode==='none'?'':String(n.name||''),noveltyMinSpend:Number.isInteger(n.minSpend)?n.minSpend:0,noveltyProductId:noveltyProductIds[0]||'',noveltyProductIds};
+   noveltyMode,noveltyName:noveltyMode==='none'?'':String(n.name||''),noveltyMinSpend:Number.isInteger(n.minSpend)?n.minSpend:0,noveltyProductId:noveltyMode==='product'?String(n.productId||''):''};
 }
-const privateAvailable=p=>p?.preorder===true?p.reservationStock:p?.stock;
-const variantAvailable=v=>v?.preorder===true?v.reservationStock:v?.stock;
 function checkStock(parsed,stock,privateMap=null){
  const quantities=stock.quantities||{};
  const variantQuantities=stock.variantQuantities||{};
@@ -131,7 +130,7 @@ function checkStock(parsed,stock,privateMap=null){
   const hasVariants=Array.isArray(p?.variants)&&p.variants.length>0;
   if(!hasVariants&&quantities[id]!==null&&(!Number.isInteger(quantities[id])||quantities[id]<qty))throw Error('在庫が不足しています：'+id+'（必要 '+qty+'点）');
   if(privateMap){
-   if(!hasVariants&&privateAvailable(p)!==null&&privateAvailable(p)!==undefined&&(!Number.isInteger(privateAvailable(p))||privateAvailable(p)<qty))throw Error('在庫が不足しています（管理側）：'+id);
+   if(!hasVariants&&p.stock!==null&&(!Number.isInteger(p.stock)||p.stock<qty))throw Error('在庫が不足しています（管理側）：'+id);
   }
  }
  for(const item of parsed.items){
@@ -140,11 +139,11 @@ function checkStock(parsed,stock,privateMap=null){
   const privateVariant=privateProduct?.variants?.find(v=>v.code===item.variant);
   if(privateProduct&&!privateVariant)throw Error('登録されていないバリエーションです：'+item.id+'_'+item.variant);
   const key=item.key;
-  if(privateVariant && Number.isInteger(variantAvailable(privateVariant)) && !(key in variantQuantities))
+  if(privateVariant && Number.isInteger(privateVariant.stock) && !(key in variantQuantities))
    throw Error('カラー別在庫が未公開です。管理画面から商品を再公開してください：'+key);
   const qty=variantQuantities[key]??null;
   if(qty!==null&&(!Number.isInteger(qty)||qty<item.qty))throw Error('このバリエーションは在庫不足です：'+item.id+'_'+item.variant);
-  if(Number.isInteger(variantAvailable(privateVariant))&&variantAvailable(privateVariant)<item.qty)throw Error('このバリエーションは在庫不足（管理側）です：'+key);
+  if(Number.isInteger(privateVariant?.stock)&&privateVariant.stock<item.qty)throw Error('このバリエーションは在庫不足（管理側）です：'+key);
  }
 }
 // All prices are frozen at first reservation. Subsequent cancellations recalculate
@@ -179,12 +178,11 @@ function reprice(lines,bundles,offer={},beforeAppDiscountOnly=false){
  return base-discount+shippingFee;
 }
 // Show novelty using the pre-app-discount subtotal; maintain this after item cancellation.
-const noveltyMatches=(order,id)=>(Array.isArray(order.noveltyProductIds)?order.noveltyProductIds:[order.noveltyProductId]).includes(id);
 function giftLabel(order){
  const lines=order.lines||order.remainingLines||[];
  if(!lines.length)return '';
  const mode=order.noveltyMode;
- const eligible=mode==='all'||mode==='minimum'&&reprice(lines,order.bundles||[],order,true)>=order.noveltyMinSpend||mode==='product'&&lines.some(x=>noveltyMatches(order,x.id));
+ const eligible=mode==='all'||mode==='minimum'&&reprice(lines,order.bundles||[],order,true)>=order.noveltyMinSpend||mode==='product'&&lines.some(x=>x.id===order.noveltyProductId);
  return eligible?'🎁 ノベルティ対象｜'+(order.noveltyName||'ノベルティ')+'　※商品と一緒に必ずお渡しください':'';
 }
 function refreshGift(order){for(const id of ['review-gift','prepared-gift']){const el=$(id);if(!el)continue;const name=giftLabel(order);el.textContent=name;el.hidden=!name;}}
@@ -203,7 +201,7 @@ function fillItems(elementId,items,canCancel=false){
  for(const item of items){
   const li=document.createElement('li'),left=document.createElement('div'),name=document.createElement('div'),qty=document.createElement('div');
   name.className='line-name';name.textContent=item.name;left.append(name);
-  if(candidate?.noveltyMode==='product'&&noveltyMatches(candidate,item.id)){const tag=document.createElement('span');tag.className='product-novelty-tag';tag.textContent='ノベルティ対象商品';left.append(tag);}
+  if(candidate?.noveltyMode==='product'&&item.id===candidate.noveltyProductId){const tag=document.createElement('span');tag.className='product-novelty-tag';tag.textContent='ノベルティ対象商品';left.append(tag);}
   if(item.variantName||item.variant){const v=document.createElement('div');v.className='line-variant';v.textContent='バリエーション：'+(item.variantName||item.variant);left.append(v);}
   const code=document.createElement('div');code.className='line-code';code.textContent='商品コード：'+item.id+(item.variant?'_'+item.variant:'');left.append(code);
   qty.className='line-qty';qty.textContent='× '+item.qty;
@@ -292,12 +290,12 @@ async function reserveAtScan(parsed,quote){
     const v=newVariants.find(x=>x.code===item.variant);
     if(!v)throw Error('バリエーション情報が一致しません。');
     if(Number.isInteger(newVariantQuantities[item.key]))newVariantQuantities[item.key]-=item.qty;
-    const field=v.preorder===true?'reservationStock':'stock';if(Number.isInteger(v[field])){v[field]-=item.qty;variantChanged=true;}
+    if(Number.isInteger(v.stock)){v.stock-=item.qty;variantChanged=true;}
    }
-   if(Number.isInteger(privateAvailable(privateProduct))||variantChanged){
+   if(Number.isInteger(privateProduct.stock)||variantChanged){
     const update={updatedAt:serverTimestamp()};
     if((privateProduct.variants||[]).length)update.stock=null;
-    else if(Number.isInteger(privateAvailable(privateProduct)))update[privateProduct.preorder===true?'reservationStock':'stock']=privateAvailable(privateProduct)-qty;
+    else if(Number.isInteger(privateProduct.stock))update.stock=privateProduct.stock-qty;
     if(variantChanged)update.variants=newVariants;
     tx.update(productRefs[ids.indexOf(id)],update);
    }
@@ -308,7 +306,7 @@ async function reserveAtScan(parsed,quote){
    discountMode:latest.discountMode,discountValue:latest.discountValue,discountMinSpend:latest.discountMinSpend,discountRegistered:latest.discountRegistered,discountApplyToPreorder:latest.discountApplyToPreorder,
    shippingFee:latest.shippingFee,shippingMode:latest.shippingMode,shippingThreshold:latest.shippingThreshold,shippingCharge:latest.shippingCharge,shippingPrefecture:latest.shippingPrefecture,
    hasPreorder:latest.hasPreorder,hasCustomerData:!!customer,
-   noveltyMode:latest.noveltyMode,noveltyName:latest.noveltyName,noveltyMinSpend:latest.noveltyMinSpend,noveltyProductId:latest.noveltyProductId,noveltyProductIds:latest.noveltyProductIds,
+   noveltyMode:latest.noveltyMode,noveltyName:latest.noveltyName,noveltyMinSpend:latest.noveltyMinSpend,noveltyProductId:latest.noveltyProductId,
    scanTime:serverTimestamp(),updatedAt:serverTimestamp()};
   tx.set(refs.sale,data);
   tx.set(refs.confirmation,{slug:brand.slug,brandId:user.uid,orderId:raw.o,status:'confirmed',confirmedAt:serverTimestamp(),
@@ -326,7 +324,7 @@ async function loadQr(text){
   if(!snap.exists()||snap.data().brandId!==user.uid)throw Error('このブランドの商品公開が未完了です。');
   const quote=calculate(parsed,snap.data(),settingSnap.exists()&&settingSnap.data().brandId===user.uid?settingSnap.data():{});
   const result=await reserveAtScan(parsed,quote);
-  acceptedView({raw:parsed.raw,lines:result.data.remainingLines,amount:result.data.amount,status:result.data.status,bundles:result.data.bundles||[],discountMode:result.data.discountMode,discountValue:result.data.discountValue,discountMinSpend:result.data.discountMinSpend,discountRegistered:result.data.discountRegistered,discountApplyToPreorder:result.data.discountApplyToPreorder,shippingFee:result.data.shippingFee,shippingMode:result.data.shippingMode,shippingThreshold:result.data.shippingThreshold,shippingCharge:result.data.shippingCharge,shippingPrefecture:result.data.shippingPrefecture,hasPreorder:result.data.hasPreorder,noveltyMode:result.data.noveltyMode,noveltyName:result.data.noveltyName,noveltyMinSpend:result.data.noveltyMinSpend,noveltyProductId:result.data.noveltyProductId,noveltyProductIds:result.data.noveltyProductIds},result.already);
+  acceptedView({raw:parsed.raw,lines:result.data.remainingLines,amount:result.data.amount,status:result.data.status,bundles:result.data.bundles||[],discountMode:result.data.discountMode,discountValue:result.data.discountValue,discountMinSpend:result.data.discountMinSpend,discountRegistered:result.data.discountRegistered,discountApplyToPreorder:result.data.discountApplyToPreorder,shippingFee:result.data.shippingFee,shippingMode:result.data.shippingMode,shippingThreshold:result.data.shippingThreshold,shippingCharge:result.data.shippingCharge,shippingPrefecture:result.data.shippingPrefecture,hasPreorder:result.data.hasPreorder,noveltyMode:result.data.noveltyMode,noveltyName:result.data.noveltyName,noveltyMinSpend:result.data.noveltyMinSpend,noveltyProductId:result.data.noveltyProductId},result.already);
  }catch(err){
   console.error('MY EXPO BAG QR確認／在庫確保エラー',err);
   const code=String(err?.code||'');
@@ -385,12 +383,12 @@ async function cancelLine(key,all=false){
      }
      const variant=revised.find(v=>v.code===line.variant);
      if(!variant)throw Error('元のバリエーションが見つかりません：'+key);
-     const field=line.preorder===true?'reservationStock':'stock';if(Number.isInteger(variant[field])){variant[field]+=line.qty;variantChanged=true;}
+     if(Number.isInteger(variant.stock)){variant.stock+=line.qty;variantChanged=true;}
     }
-    if(Number.isInteger(privateAvailable(priv))||variantChanged){
+    if(Number.isInteger(priv.stock)||variantChanged){
      const update={updatedAt:serverTimestamp()};
      if((priv.variants||[]).length)update.stock=null;
-     else if(Number.isInteger(privateAvailable(priv))){const field=priv.preorder===true?'reservationStock':'stock';if(priv[field]+qty>100000000)throw Error('商品在庫が上限を超えます');update[field]=priv[field]+qty;}
+     else if(Number.isInteger(priv.stock)){if(priv.stock+qty>100000000)throw Error('商品在庫が上限を超えます');update.stock=priv.stock+qty;}
      if(variantChanged)update.variants=revised;
      tx.update(productRefs[i],update);
     }

@@ -259,11 +259,12 @@ function reservationFromTable(){
    releaseYear:tr.querySelector('.reservation-year').value,
    releaseMonth:tr.querySelector('.reservation-month').value,
    releasePeriod:tr.querySelector('.reservation-period').value,
-   reservationStock:tr.querySelector('.reservation-stock').value
+   reservationStock:tr.querySelector('.reservation-stock').value,
+   reservationPriceMode:tr.querySelector('.reservation-price-mode').value
   });
  }
 }
-function reserveFor(code){return reservationDrafts.get(code)||{preorder:parentPreorderMode,releaseYear:'',releaseMonth:'',releasePeriod:'',reservationStock:''};}
+function reserveFor(code){return reservationDrafts.get(code)||{preorder:parentPreorderMode,releaseYear:'',releaseMonth:'',releasePeriod:'',reservationStock:'',reservationPriceMode:'normal'};}
 function syncPreorderBoxes(){
  $('product-preorder-all').checked=parentPreorderMode;
  for(const row of $('variant-rows').children){
@@ -329,7 +330,30 @@ function renderReservationTable(sync=true){
   const period=select('reservation-period','予定時期',[['','時期'],['上旬','上旬'],['中旬','中旬'],['下旬','下旬']],item.releasePeriod);
   dateCell.append(dates);
   const qtyCell=document.createElement('td');const qty=document.createElement('input');qty.type='number';qty.className='reservation-stock';qty.min='0';qty.max='100000000';qty.step='1';qty.value=String(item.reservationStock??'');qty.placeholder='個数';qty.setAttribute('aria-label',entry.name+'の予約品在庫数');qtyCell.append(qty);
-  const toggle=()=>{for(const el of [y,m,period,qty])el.disabled=!check.checked;};
+  // Reservation price is selected per SKU. Non-reservations keep their existing campaign behavior.
+  const priceCell=document.createElement('td'),priceMode=document.createElement('select');priceMode.className='reservation-price-mode';
+  priceMode.setAttribute('aria-label',entry.name+'の予約販売時価格');
+  const sourceRow=entry.key==='__base__'?null:rows.find(el=>trim(el.querySelector('.variant-code').value).toUpperCase()===entry.key);
+  const rawBase=Number($('product-price').value),baseValid=trim($('product-price').value)!==''&&Number.isFinite(rawBase);
+  const override=sourceRow?.querySelector('.variant-price');
+  const rawOverride=override&&override.dataset.inherited!=='1'?trim(override.value):'';
+  const normal=rawOverride!==''?Number(rawOverride):rawBase;
+  const normalValid=baseValid&&Number.isFinite(normal);
+  const rawSpecial=sourceRow?trim(sourceRow.querySelector('.variant-event-price').value):'';
+  const parentSpecial=trim($('product-event-price').value);
+  const specialText=rawSpecial!==''?rawSpecial:parentSpecial;
+  const special=Number(specialText);
+  const campaignValid=normalValid&&specialText!==''&&Number.isFinite(special)&&special>=0&&special<normal;
+  const yenPrice=value=>Number.isFinite(value)?'¥'+value.toLocaleString('ja-JP'):'—';
+  const regularOption=document.createElement('option');regularOption.value='normal';regularOption.textContent='通常価格'+(normalValid?' '+yenPrice(normal):'');priceMode.append(regularOption);
+  const campaignOption=document.createElement('option');campaignOption.value='campaign';campaignOption.textContent='キャンペーン価格'+(campaignValid?' '+yenPrice(special):'（未設定）');campaignOption.disabled=!campaignValid;priceMode.append(campaignOption);
+  // Retain an invalid legacy selection for explicit validation at save time, never silently change the order price.
+  priceMode.value=item.reservationPriceMode==='campaign'?'campaign':'normal';
+  const priceAmount=document.createElement('div');priceAmount.className='reservation-price-amount';
+  const drawPrice=()=>{priceAmount.textContent=priceMode.value==='campaign'?(campaignValid?yenPrice(special):'キャンペーン価格を設定してください'):(normalValid?yenPrice(normal):'通常価格を設定してください');};
+  priceMode.addEventListener('change',()=>{reservationDrafts.set(entry.key,{...reserveFor(entry.key),reservationPriceMode:priceMode.value});drawPrice();});
+  priceCell.append(priceMode,priceAmount);drawPrice();
+  const toggle=()=>{for(const el of [y,m,period,qty,priceMode])el.disabled=!check.checked;};
   // Typing in the reservation table immediately updates the same SKU's stock input
   // on the variations tab. It does not alter the preserved ordinary stock.
   qty.addEventListener('input',()=>{
@@ -341,7 +365,7 @@ function renderReservationTable(sync=true){
    }
   });
   check.addEventListener('change',()=>{reservationFromTable();setReservationChoice(entry.key,check.checked);});toggle();
-  tr.append(name,variant,cbcell,dateCell,qtyCell);body.append(tr);
+  tr.append(name,variant,cbcell,dateCell,qtyCell,priceCell);body.append(tr);
  }
  syncPreorderBoxes();
 }
@@ -423,6 +447,7 @@ function validateReservation(item,label){
  const preorder=item.preorder===true||item.preorder==='1';
  const releaseYear=preorder?Number(item.releaseYear):null,releaseMonth=preorder?Number(item.releaseMonth):null,releasePeriod=preorder?trim(item.releasePeriod):'';
  const reservationStock=preorder?money(item.reservationStock??'',label+'の予約品在庫数'):null;
+ const reservationPriceMode=item.reservationPriceMode==='campaign'?'campaign':'normal';
  if(preorder){
   if(!Number.isInteger(releaseYear)||releaseYear<2020||releaseYear>2100||!Number.isInteger(releaseMonth)||releaseMonth<1||releaseMonth>12||!validPeriods.includes(releasePeriod))throw Error(label+'の予約予定（年・月・上旬／中旬／下旬）を入力してください。');
   // An already-registered reservation may retain its original date; new selections cannot be in the past.
@@ -432,7 +457,7 @@ function validateReservation(item,label){
   if(newRank<todayRank)throw Error(label+'の予約予定は過去の時期を選択できません。');
   if(reservationStock===null)throw Error(label+'の予約品在庫数を入力してください。0も入力可能です。');
  }
- return {preorder,releaseYear,releaseMonth,releasePeriod,reservationStock};
+ return {preorder,releaseYear,releaseMonth,releasePeriod,reservationStock,reservationPriceMode};
 }
 function productOf(fields){
  const id=trim(fields.id),name=trim(fields.name),categoryName=trim(fields.categoryName);
@@ -447,6 +472,7 @@ function productOf(fields){
   if(!v.code||!v.name||!/^[A-Z0-9_-]{1,25}$/i.test(v.code))throw Error('サブコード・バリエーション名を確認してください。');
   const variantPrice=money(v.price??'',id+'のバリエーション通常価格',true),variantEvent=money(v.eventPrice??'',id+'のバリエーションキャンペーン価格',true);
   const effectivePrice=variantPrice??price,effectiveEvent=variantEvent??eventPrice;
+  if(v.preorder===true&&v.reservationPriceMode==='campaign'&&effectiveEvent===null)throw Error(id+' / '+v.name+'：予約販売のキャンペーン価格を設定してください。');
   if(effectiveEvent!==null&&effectiveEvent>=effectivePrice)throw Error(id+'：バリエーションのキャンペーン価格は、その種類の通常価格より小さくしてください。個別価格を調整するか、個別キャンペーン価格を設定してください。');
   const variantStock=money(v.stock??'',id+'のバリエーション在庫数',true);
   const janCode=trim(v.janCode??'');if(janCode&&!/^\d{8,14}$/.test(janCode))throw Error(id+'：バリエーションJANは8〜14桁にしてください。');
@@ -456,7 +482,8 @@ function productOf(fields){
  const ids=variants.map(v=>v.janCode).filter(Boolean);if(new Set(ids).size!==ids.length)throw Error(id+'：バリエーションJANが重複しています。');
  const janCode=variants.length?'':trim(fields.janCode??'');if(janCode&&!/^\d{8,14}$/.test(janCode))throw Error(id+'：JANコードは8〜14桁の数字にしてください。');
  const stock=variants.length?null:money(fields.stock??'',id+'の在庫数',true);
- const reserve=variants.length?{preorder:false,releaseYear:null,releaseMonth:null,releasePeriod:'',reservationStock:null}:validateReservation(fields,id);
+ const reserve=variants.length?{preorder:false,releaseYear:null,releaseMonth:null,releasePeriod:'',reservationStock:null,reservationPriceMode:'normal'}:validateReservation(fields,id);
+ if(!variants.length&&reserve.preorder===true&&reserve.reservationPriceMode==='campaign'&&eventPrice===null)throw Error(id+'：予約販売のキャンペーン価格を設定してください。');
  const inputCombos=Array.isArray(fields.combos)?fields.combos:(fields.comboProductId?[{productId:fields.comboProductId,discount:fields.comboDiscount??0}]:[]);
  const combos=validateCombos(id,inputCombos);
  const comboProductId=combos[0]?.productId||'',comboDiscount=combos[0]?.discount||0;
@@ -504,13 +531,13 @@ function focusProblemTab(error){
 function publicProjectionOf(p){
  return {
   id:p.id,name:p.name,categoryId:p.categoryName,price:p.price,eventPrice:p.eventPrice??null,
-  preorder:p.preorder===true,releaseYear:p.releaseYear??null,releaseMonth:p.releaseMonth??null,releasePeriod:p.releasePeriod||'',
-  variants:(p.variants||[]).map(v=>({code:v.code,name:v.name,price:v.price??null,eventPrice:v.eventPrice??null,preorder:v.preorder===true,releaseYear:v.releaseYear??null,releaseMonth:v.releaseMonth??null,releasePeriod:v.releasePeriod||''})).sort((a,b)=>a.code.localeCompare(b.code)),
+  preorder:p.preorder===true,releaseYear:p.releaseYear??null,releaseMonth:p.releaseMonth??null,releasePeriod:p.releasePeriod||'',reservationPriceMode:p.reservationPriceMode||'normal',
+  variants:(p.variants||[]).map(v=>({code:v.code,name:v.name,price:v.price??null,eventPrice:v.eventPrice??null,preorder:v.preorder===true,reservationPriceMode:v.reservationPriceMode||'normal',releaseYear:v.releaseYear??null,releaseMonth:v.releaseMonth??null,releasePeriod:v.releasePeriod||''})).sort((a,b)=>a.code.localeCompare(b.code)),
   combos:existingCombos(p).map(c=>({id:c.productId,discount:c.discount})).sort((a,b)=>a.id.localeCompare(b.id))
  };
 }
 function normalizedPublicRecord(p){
- return {id:p.id,name:p.name,categoryId:p.categoryId,price:p.price,eventPrice:p.eventPrice??null,preorder:p.preorder===true,releaseYear:p.releaseYear??null,releaseMonth:p.releaseMonth??null,releasePeriod:p.releasePeriod||'',variants:(p.variants||[]).map(v=>({code:v.code,name:v.name,price:v.price??null,eventPrice:v.eventPrice??null,preorder:v.preorder===true,releaseYear:v.releaseYear??null,releaseMonth:v.releaseMonth??null,releasePeriod:v.releasePeriod||''})).sort((a,b)=>a.code.localeCompare(b.code))};
+ return {id:p.id,name:p.name,categoryId:p.categoryId,price:p.price,eventPrice:p.eventPrice??null,preorder:p.preorder===true,reservationPriceMode:p.reservationPriceMode||'normal',releaseYear:p.releaseYear??null,releaseMonth:p.releaseMonth??null,releasePeriod:p.releasePeriod||'',variants:(p.variants||[]).map(v=>({code:v.code,name:v.name,price:v.price??null,eventPrice:v.eventPrice??null,preorder:v.preorder===true,reservationPriceMode:v.reservationPriceMode||'normal',releaseYear:v.releaseYear??null,releaseMonth:v.releaseMonth??null,releasePeriod:v.releasePeriod||''})).sort((a,b)=>a.code.localeCompare(b.code))};
 }
 function stableStringify(value){if(Array.isArray(value))return '['+value.map(stableStringify).join(',')+']';if(value&&typeof value==='object')return '{'+Object.keys(value).sort().map(k=>JSON.stringify(k)+':'+stableStringify(value[k])).join(',')+'}';return JSON.stringify(value);}
 function productPending(p){
@@ -642,8 +669,8 @@ function editProduct(id){
  const axes=p.variantAxes||{};
  for(const [name,value] of [['axis1-name',axes.axis1Name||''],['axis2-name',axes.axis2Name||'']])$(name).value=value;
  reservationDrafts.clear();$('reservation-rows').replaceChildren();parentPreorderMode=(p.variants||[]).length?p.preorderAll===true:p.preorder===true;
- if((p.variants||[]).length){for(const v of p.variants){reservationDrafts.set(trim(v.code).startsWith(p.id+'_')?trim(v.code).slice(p.id.length+1):v.code,{preorder:v.preorder===true,releaseYear:v.releaseYear??p.releaseYear??'',releaseMonth:v.releaseMonth??p.releaseMonth??'',releasePeriod:v.releasePeriod||p.releasePeriod||'',reservationStock:v.reservationStock??v.stock??''});}}
- else reservationDrafts.set('__base__',{preorder:p.preorder===true,releaseYear:p.releaseYear??'',releaseMonth:p.releaseMonth??'',releasePeriod:p.releasePeriod||'',reservationStock:p.reservationStock??p.stock??''});
+ if((p.variants||[]).length){for(const v of p.variants){reservationDrafts.set(trim(v.code).startsWith(p.id+'_')?trim(v.code).slice(p.id.length+1):v.code,{preorder:v.preorder===true,releaseYear:v.releaseYear??p.releaseYear??'',releaseMonth:v.releaseMonth??p.releaseMonth??'',releasePeriod:v.releasePeriod||p.releasePeriod||'',reservationStock:v.reservationStock??v.stock??'',reservationPriceMode:v.reservationPriceMode||'normal'});}}
+ else reservationDrafts.set('__base__',{preorder:p.preorder===true,releaseYear:p.releaseYear??'',releaseMonth:p.releaseMonth??'',releasePeriod:p.releasePeriod||'',reservationStock:p.reservationStock??p.stock??'',reservationPriceMode:p.reservationPriceMode||'normal'});
  showVariants((p.variants||[]).map(v=>({code:trim(v.code).startsWith(p.id+'_')?trim(v.code).slice(p.id.length+1):v.code,name:v.name,price:v.price??'',eventPrice:v.eventPrice??'',stock:v.stock??'',janCode:v.janCode??'',axis1:v.axis1||'',axis2:v.axis2||''})));
  $('product-jan').value=p.janCode||'';resetTotalStockState(p.stock??'');
  showCombos(existingCombos(p));$('product-active').checked=p.active!==false;
@@ -828,8 +855,8 @@ async function publishCatalog({automatic=false,allowBusy=false}={}){
   publicationStage='公開用データ作成';
   const exposed=visible.map(productRecord=>({
    id:productRecord.id,name:productRecord.name,categoryId:productRecord.categoryName,price:productRecord.price,
-   eventPrice:productRecord.eventPrice??null,noveltyTarget:productRecord.noveltyTarget===true,preorder:productRecord.preorder===true,releaseYear:productRecord.releaseYear??null,releaseMonth:productRecord.releaseMonth??null,releasePeriod:productRecord.releasePeriod||'',stock:productRecord.variants?.length?null:(productRecord.preorder===true?productRecord.reservationStock??null:productRecord.stock??null),
-   variants:(productRecord.variants||[]).map(v=>({code:v.code,name:v.name,price:v.price??null,eventPrice:v.eventPrice??null,stock:v.preorder===true?v.reservationStock??null:v.stock??null,preorder:v.preorder===true,releaseYear:v.releaseYear??null,releaseMonth:v.releaseMonth??null,releasePeriod:v.releasePeriod||''}))
+   eventPrice:productRecord.eventPrice??null,noveltyTarget:productRecord.noveltyTarget===true,preorder:productRecord.preorder===true,reservationPriceMode:productRecord.reservationPriceMode||'normal',releaseYear:productRecord.releaseYear??null,releaseMonth:productRecord.releaseMonth??null,releasePeriod:productRecord.releasePeriod||'',stock:productRecord.variants?.length?null:(productRecord.preorder===true?productRecord.reservationStock??null:productRecord.stock??null),
+   variants:(productRecord.variants||[]).map(v=>({code:v.code,name:v.name,price:v.price??null,eventPrice:v.eventPrice??null,stock:v.preorder===true?v.reservationStock??null:v.stock??null,preorder:v.preorder===true,reservationPriceMode:v.reservationPriceMode||'normal',releaseYear:v.releaseYear??null,releaseMonth:v.releaseMonth??null,releasePeriod:v.releasePeriod||''}))
   }));
   // Each product can propose up to 3 combinations. Keep the best discount
   // once when both sides define the same pair. Not an ordered purchase.
