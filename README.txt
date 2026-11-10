@@ -1,7 +1,8 @@
-MY EXPO BAG テスト版 UI 修正
+MY EXPO BAG TEST - Free Pro-only UI lock fix 2026-11-10
 
-変更：バリエーションタブから「選択肢から複数の組合せを一括生成（任意）」の入力欄、生成ボタン、関連プログラムを削除。行追加と手入力は維持。予約タブの「発売予定を一括設定」は維持。
-
-GitHubのmyexpobag-testリポジトリでproducts.htmlとproducts.jsのみ更新してください。Firestoreルールの更新は不要です。
-
-A1用POP背景・管理画面アイコン・テキストロゴのファイルは同梱・変更していません。
+Update products.html and products.js in GitHub Pages repository myexpobag-test (root).
+No Firestore rules update needed. Clear cache or hard reload.
+Free: product-level preorder checkbox, variant preorder checkboxes and reservation/combo/CSV controls are disabled, including after dynamic row re-render.
+Pro/Tester: no new restriction. Tab navigation remains visible for feature discovery.
+Saving/publishing validation and Firestore rules remain active.
+This update does not touch images, POP assets, icons or logos.

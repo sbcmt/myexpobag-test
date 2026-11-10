@@ -23,6 +23,32 @@ const trim=v=>String(v??'').trim();
 const yen=n=>'¥'+Number(n).toLocaleString('ja-JP');
 function status(message,error=false){const e=$('status');e.textContent=message;e.className='status'+(error?' error':'');e.hidden=false;}
 function refreshActionButtons(){for(const id of ['product-save','import-save','images-save','publish-catalog'])$(id).disabled=busy||imageProcessing||(id==='import-save'&&(!importData||!isPro()))||(id==='images-save'&&!imagesReady.length);for(const b of document.querySelectorAll('.tab-save-button'))b.disabled=busy||imageProcessing;if(user)categoryOptions();}
+// Reapply Free locks when editable rows are dynamically regenerated.
+// A disabled control must never be the only line of authorization; server rules
+// and validation on saving/publishing remain in effect.
+let proOnlyRowObserver=null;
+function enforceFreeEditableLocks(){
+ if(isPro())return;
+ for(const id of ['panel-preorder','panel-combo','panel-csv']){
+  const panel=$(id);if(!panel)continue;
+  for(const el of panel.querySelectorAll('input,select,textarea,button')){
+   if(el.classList.contains('tab-save-button'))continue;
+   el.disabled=true;
+   el.dataset.planDisabled='true';
+  }
+ }
+ const parent=$('product-preorder-all');if(parent)parent.disabled=true;
+ const variants=$('variant-rows');if(variants){
+  for(const check of variants.querySelectorAll('.variant-preorder'))check.disabled=true;
+ }
+}
+function observeFreeEditableLocks(){
+ if(proOnlyRowObserver || typeof MutationObserver==='undefined')return;
+ proOnlyRowObserver=new MutationObserver(()=>enforceFreeEditableLocks());
+ for(const id of ['panel-preorder','panel-combo','panel-csv','variant-rows']){
+  const target=$(id);if(target)proOnlyRowObserver.observe(target,{childList:true,subtree:true});
+ }
+}
 function applyFreePlanUI(){
  const paid=isPro();
  for(const id of ['panel-preorder','panel-combo','panel-csv']){
@@ -46,7 +72,27 @@ function applyFreePlanUI(){
  const countHelp=document.querySelector('#panel-csv .row .muted');if(countHelp)countHelp.textContent='1回300商品まで';
  for(const id of ['download-csv','sample-csv','export-csv','import-file'])if($(id))$(id).disabled=!paid;
  refreshActionButtons();
+ // Editing an existing product and switching tabs recreate reservation and
+ // combination controls. Keep those fresh controls locked for Free too.
+ observeFreeEditableLocks();
+ enforceFreeEditableLocks();
 }
+// Free: reject interaction with any dynamically rendered Pro-only control,
+// including cases where another routine temporarily clears the disabled flag.
+function guardFreePaidInput(event){
+ if(isPro())return;
+ const target=event.target;
+ if(!(target instanceof Element))return;
+ const field=target.closest('input,select,textarea,button');
+ if(!field || field.classList.contains('tab-save-button'))return;
+ if(field.closest('#panel-preorder,#panel-combo,#panel-csv') ||
+    field.id==='product-preorder-all' || field.classList.contains('variant-preorder')){
+  event.preventDefault();event.stopImmediatePropagation();
+  field.disabled=true;
+ }
+}
+document.addEventListener('click',guardFreePaidInput,true);
+document.addEventListener('keydown',guardFreePaidInput,true);
 function setBusy(flag){busy=flag;refreshActionButtons();}
 function money(value,label,optional=false){
  const v=trim(value);if(optional&&v==='')return null;
