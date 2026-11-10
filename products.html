@@ -126,13 +126,13 @@
 <div class="row" style="margin-top:12px"><button class="primary" disabled="" id="images-save" type="button">確認した画像を一括登録</button><span class="muted" id="images-count"></span></div>
 </div></section>
 <section class="product-tab-panel" id="panel-variants" role="tabpanel" aria-labelledby="tab-variants" hidden>
-<p class="tab-description">項目名を設定し、各行で選択肢・商品コード・価格・在庫・JAN・予約対象を入力します。</p>
+<p class="tab-description">各行の在庫数は、予約販売にチェックすると「予約品在庫数」に切り替わり、予約タブと自動同期します。チェックを外すと元の通常在庫に戻ります。</p>
 <div class="axis-grid">
  <div class="field"><label for="axis1-name">バリエーション項目名①</label><input id="axis1-name" maxlength="40" placeholder="例：カラー"/></div>
  <div class="field"><label for="axis2-name">バリエーション項目名②（任意）</label><input id="axis2-name" maxlength="40" placeholder="例：サイズ"/></div>
 </div>
 <div class="variant-table-scroller"><table class="variant-editor-table" aria-label="バリエーション別の商品設定">
-<thead><tr><th id="axis1-head">選択肢①</th><th id="axis2-head">選択肢②</th><th>商品コード（親＋_末尾）</th><th>価格（税込・円）</th><th>通常在庫</th><th>JAN（任意）</th><th>予約販売</th><th>操作</th></tr></thead>
+<thead><tr><th id="axis1-head">選択肢①</th><th id="axis2-head">選択肢②</th><th>商品コード（親＋_末尾）</th><th>価格（税込・円）</th><th>在庫数（予約時は予約品）</th><th>JAN（任意）</th><th>予約販売</th><th>操作</th></tr></thead>
 <tbody id="variant-rows"></tbody></table></div>
 <div class="row"><button type="button" id="add-variant">＋ 行を追加</button><span id="variant-entry-hint" class="muted" hidden>商品コードは「親商品ID_サブコード」で登録します。</span></div>
 
@@ -147,7 +147,7 @@
  <button id="bulk-apply" type="button" class="primary">予約対象に一括適用</button>
 </div>
 <div class="reservation-scroller"><table class="reservation-table"><thead><tr><th scope="col">商品名</th><th scope="col">バリエーション</th><th scope="col">予約可否</th><th scope="col">発売予定（年・月・時期）</th><th scope="col">予約品在庫数</th></tr></thead><tbody id="reservation-rows"></tbody></table></div>
-<p class="hint">発売予定は1行で表示し、個別に変更できます。一括設定は予約チェックが入った行のみ反映します。予約在庫数は各行で個別に入力してください。</p>
+<p class="hint">発売予定は1行で表示します。予約品在庫数はバリエーションタブの在庫数と自動同期します（予約チェック中のみ）。一括設定は予約対象の発売予定だけに反映します。</p>
 </section>
 <section class="product-tab-panel" id="panel-combo" role="tabpanel" aria-labelledby="tab-combo" hidden>
 <p class="tab-description">他の商品と同時購入した際の組合せ割引を設定します。</p>
@@ -201,6 +201,6 @@
   },15000);
 })();
 </script>
-<script onerror="window.MEB_PRODUCTS_STARTUP_ERROR?.()" src="./products.js?asset=20261110-catalog-link-v1" type="module"></script>
+<script onerror="window.MEB_PRODUCTS_STARTUP_ERROR?.()" src="./products.js?asset=20261110-reserve-stock-sync-v1" type="module"></script>
 <div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
 </body></html>

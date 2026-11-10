@@ -182,10 +182,11 @@ function updateTotalStockField(){
  }
  if(!totalAutoMode)manualTotalDraft=input.value;
  totalAutoMode=true;input.value=sum===null?'':String(sum);input.readOnly=true;input.setAttribute('aria-readonly','true');
- input.placeholder=unlimited?'無制限（カラー別に管理）':'カラーごとに入力すると参考合計を表示';
+ input.placeholder=unlimited?'無制限（通常商品のみ）':'バリエーションごとの在庫数の参考合計';
+ const hasReservation=[...$('variant-rows').children].some(row=>row.querySelector('.variant-stock')?.dataset.stockMode==='preorder');
  hint.textContent=incomplete?'バリエーション名・サブコードを入力してください。保存時に確認します。':
-   unlimited?'カラー別の在庫に空欄があるため、総数は「無制限」です。空欄でも商品登録できます。':
-   '参考合計：'+sum+'個。販売上限はカラー別在庫で判定します。';
+   unlimited?'一部の通常在庫が無制限です。予約対象の在庫数は必須です。':
+   '参考合計：'+sum+'個'+(hasReservation?'（予約品在庫を含む）':'')+'。販売上限は各バリエーションで判定します。';
 }
 function resetTotalStockState(value=''){
  totalAutoMode=false;manualTotalDraft=String(value??'');
@@ -221,6 +222,17 @@ function variantRow(values={}){
  price.addEventListener('input',()=>{price.dataset.inherited='0';hint.textContent='個別価格';});
  price.addEventListener('blur',()=>{if(trim(price.value)===''){price.dataset.inherited='1';price.value=trim($('product-price').value);hint.textContent='親価格を使用';}});
  const stock=textInput(cell(),'variant-stock','空欄＝無制限',values.stock,'number');stock.min='0';stock.max='100000000';stock.step='1';
+ // Preserve ordinary inventory when this single visible input switches to preorder inventory.
+ // The two tabs share the same reservation quantity; Firestore still keeps both fields separate.
+ row.dataset.normalStock=String(values.stock??'');stock.dataset.stockMode='normal';
+ stock.addEventListener('input',()=>{
+  if(stock.dataset.stockMode==='preorder'){
+   const key=trim(code.value).toUpperCase();
+   reservationDrafts.set(key,{...reserveFor(key),reservationStock:stock.value});
+   const other=[...$('reservation-rows').children].find(tr=>tr.dataset.resKey===key);
+   if(other)other.querySelector('.reservation-stock').value=stock.value;
+  }else row.dataset.normalStock=stock.value;
+ });
  const jan=textInput(cell(),'variant-jan','JAN（任意）',values.janCode);jan.inputMode='numeric';jan.maxLength=14;
  const reserv=cell(),preorder=document.createElement('input');preorder.className='variant-preorder';preorder.type='checkbox';preorder.setAttribute('aria-label','このバリエーションを予約販売');reserv.append(preorder);
  const controls=cell(),remove=document.createElement('button');remove.type='button';remove.textContent='削除';remove.className='danger';remove.addEventListener('click',()=>{reservationFromTable();reservationDrafts.delete(trim(code.value).toUpperCase());row.remove();updateTotalStockField();toggleRelease();updateVariantVisibility();});controls.append(remove);
@@ -254,7 +266,36 @@ function reservationFromTable(){
 function reserveFor(code){return reservationDrafts.get(code)||{preorder:parentPreorderMode,releaseYear:'',releaseMonth:'',releasePeriod:'',reservationStock:''};}
 function syncPreorderBoxes(){
  $('product-preorder-all').checked=parentPreorderMode;
- for(const el of $('variant-rows').children){const key=trim(el.querySelector('.variant-code').value).toUpperCase();el.querySelector('.variant-preorder').checked=reserveFor(key).preorder===true;}
+ for(const row of $('variant-rows').children){
+  const key=trim(row.querySelector('.variant-code').value).toUpperCase();
+  const checkbox=row.querySelector('.variant-preorder'),stock=row.querySelector('.variant-stock');
+  const isReservation=reserveFor(key).preorder===true;
+  checkbox.checked=isReservation;
+  if(isReservation){
+   if(stock.dataset.stockMode!=='preorder'){
+    row.dataset.normalStock=stock.value;
+    const item=reserveFor(key);
+    // First time a SKU is marked as preorder, carry its entered quantity across.
+    // If it had its own preorder quantity already, prefer the previously saved quantity.
+    if(item.reservationStock===null||item.reservationStock===undefined||item.reservationStock==='')
+     reservationDrafts.set(key,{...item,reservationStock:stock.value});
+   }
+   stock.dataset.stockMode='preorder';
+   stock.value=String(reserveFor(key).reservationStock??'');
+   stock.placeholder='予約在庫（必須）';
+   stock.title='予約タブの「予約品在庫数」と同期します';
+   stock.setAttribute('aria-label','予約品在庫数');
+   const other=[...$('reservation-rows').children].find(tr=>tr.dataset.resKey===key);
+   if(other)other.querySelector('.reservation-stock').value=stock.value;
+  }else{
+   if(stock.dataset.stockMode==='preorder')stock.value=row.dataset.normalStock??'';
+   stock.dataset.stockMode='normal';
+   stock.placeholder='空欄＝無制限';
+   stock.title='通常在庫数';
+   stock.setAttribute('aria-label','通常在庫数');
+  }
+ }
+ updateTotalStockField();
 }
 function setReservationChoice(key,checked){
  reservationFromTable();
@@ -289,6 +330,16 @@ function renderReservationTable(sync=true){
   dateCell.append(dates);
   const qtyCell=document.createElement('td');const qty=document.createElement('input');qty.type='number';qty.className='reservation-stock';qty.min='0';qty.max='100000000';qty.step='1';qty.value=String(item.reservationStock??'');qty.placeholder='個数';qty.setAttribute('aria-label',entry.name+'の予約品在庫数');qtyCell.append(qty);
   const toggle=()=>{for(const el of [y,m,period,qty])el.disabled=!check.checked;};
+  // Typing in the reservation table immediately updates the same SKU's stock input
+  // on the variations tab. It does not alter the preserved ordinary stock.
+  qty.addEventListener('input',()=>{
+   reservationDrafts.set(entry.key,{...reserveFor(entry.key),reservationStock:qty.value});
+   const row=[...$('variant-rows').children].find(el=>trim(el.querySelector('.variant-code').value).toUpperCase()===entry.key);
+   if(row&&row.querySelector('.variant-stock').dataset.stockMode==='preorder'){
+    row.querySelector('.variant-stock').value=qty.value;
+    updateTotalStockField();
+   }
+  });
   check.addEventListener('change',()=>{reservationFromTable();setReservationChoice(entry.key,check.checked);});toggle();
   tr.append(name,variant,cbcell,dateCell,qtyCell);body.append(tr);
  }
@@ -312,7 +363,9 @@ function readVariants(id){
   if(price!==null&&eventPrice!==null&&eventPrice>=price)throw Error('バリエーションキャンペーン価格は通常価格未満にしてください。');
   if(!trim(el.querySelector('.variant-axis1').value))throw Error('バリエーションの選択肢①を入力してください。');
   if(trim(el.querySelector('.variant-axis2').value)&&!trim($('axis2-name').value))throw Error('バリエーション項目名②を入力してください。');
-  const stock=money(stockText,'バリエーション在庫数',true);
+  // A checked reservation displays reservationStock in the editor, not ordinary stock.
+  // Persist ordinary stock from its separate in-memory draft so toggling back restores it.
+  const stock=money(el.dataset.normalStock??stockText,'バリエーション通常在庫数',true);
   const reserve=reserveFor(code);
   result.push({code,name,price,eventPrice,stock,janCode,axis1:trim(el.querySelector('.variant-axis1').value),axis2:trim(el.querySelector('.variant-axis2').value),...reserve});
  }
