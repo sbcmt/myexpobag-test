@@ -100,7 +100,8 @@ function render(){out.replaceChildren();if(!lines.length){showMessage('該当す
  const n=lines.filter(x=>!x.published).length;
  $('pricecards-notice').textContent=n?`⚠ 未公開のカードが${n}枚あります。商品を「お客様ページに反映」したあとに掲示してください。`:'登録済み商品IDごとに1枚のPRICE CARDです。印刷時はA4・倍率100%・余白なしを確認してください。';
 }
-for(const t of ['white','accent'])$(t).addEventListener('click',()=>{style=t;render();});
+for(const t of ['white','accent'])$(t).addEventListener('click',()=>{if(t==='accent'&&!window.MEB_PLAN?.requirePro('アクセントプライスカード'))return;style=t;render();});
+document.addEventListener('meb-plan-updated',()=>{if(!window.MEB_PLAN.isPro()&&style==='accent'){style='white';render();}const a=$('accent');if(a){a.disabled=!window.MEB_PLAN.isPro();a.title=window.MEB_PLAN.isPro()?'':'Pro.限定';}});
 $('print').addEventListener('click',()=>window.print());
 if(!['apiKey','authDomain','projectId','appId'].every(k=>typeof cfg[k]==='string'&&cfg[k]))showMessage('Firebase設定を確認してください。');
 else{

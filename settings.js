@@ -7,7 +7,7 @@ const presets={natural:{label:'フォレスト',main:'#315746',sub:'#F2EEE6',tex
 let db,owner,slug='',bannerData='',preset='natural',busy=false,settingsExists=false,noveltyProductEntries=[];
 function status(s,error=false){$('status').textContent=s;$('status').className='status '+(error?'error':'good');}
 function previewTheme(){const c=presets[preset],head=$('theme-preview-head'),button=$('theme-preview-button');const selected=$('selected-theme-label');if(selected)selected.textContent=c.label;head.style.color=c.text;head.style.background=c.sub;button.style.color='#fff';button.style.background=c.main;[...$('swatches').children].forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.preset===preset)));}
-for(const [key,c] of Object.entries(presets)){const b=document.createElement('button');b.type='button';b.className='swatch';b.dataset.preset=key;b.innerHTML='<span class="swatch-dot" style="background:'+c.main+'"></span><span>'+c.label+'</span>';b.onclick=()=>{preset=key;previewTheme()};$('swatches').append(b)}previewTheme();
+for(const [key,c] of Object.entries(presets)){const b=document.createElement('button');b.type='button';b.className='swatch';b.dataset.preset=key;b.innerHTML='<span class="swatch-dot" style="background:'+c.main+'"></span><span>'+c.label+'</span>';b.onclick=()=>{if(!window.MEB_PLAN?.isPro()&&!window.MEB_PLAN?.freeColors.includes(key)){window.MEB_PLAN?.requirePro('ブランドカラー');return;}preset=key;previewTheme()};$('swatches').append(b)}previewTheme();
 const radio=(name)=>document.querySelector('input[name="'+name+'"]:checked')?.value||'none';
 const setRadio=(name,value)=>{const el=document.querySelector('input[name="'+name+'"][value="'+value+'"]');if(el)el.checked=true};
 function fields(){const mode=radio('discount-mode');$('discount-fields').hidden=mode==='none';$('discount-label').textContent=mode==='percent'?'割引率（％・必須）':'割引額（円・必須）';$('discount-value').max=mode==='percent'?'100':'100000000';const enabled=$('novelty-enabled').checked;const noveltyMode=radio('novelty-mode');$('novelty-fields').hidden=!enabled;$('minimum-fields').hidden=!enabled||noveltyMode!=='minimum';$('product-fields').hidden=!enabled||noveltyMode!=='product'}
@@ -80,6 +80,7 @@ $('save').onclick=async()=>{
   if(discountMinSpend>100000000)throw Error('割引の下限金額の上限は1億円です。');
   if(bannerData && (!/^data:image\/(?:webp|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/.test(bannerData)||bannerData.length>210000))throw Error('バナー画像の保存形式が現在の仕様と異なります。画像を再登録してください。');
   busy=true;$('save').disabled=true;status('保存しています…');
+  if(!window.MEB_PLAN?.isPro()&&(novMode!=='none'||!window.MEB_PLAN?.freeColors.includes(preset)))throw Error('Free版ではノベルティと一部ブランドカラーを利用できません。');
   const savedNovelty={mode:novMode,name,minSpend,productId,productIds};
   const handoffExpiryMinutes=Number($('handoff-expiry').value||5);
   await setDoc(doc(db,'brandSettings',slug),{brandId:owner.uid,slug,theme:{preset},banner:{enabled:$('banner-enabled').checked,hiddenDefault:!$('banner-enabled').checked&&!bannerData,imageData:bannerData,linkMode,linkValue},discount:{mode,value,minSpend:discountMinSpend,applyToPreorder:$('discount-preorder').checked},checkout:{handoffExpiryMinutes:[1,3,5,10].includes(handoffExpiryMinutes)?handoffExpiryMinutes:5},novelty:savedNovelty,...(!settingsExists?{shipping:{mode:'all',threshold:0,charge:0,rates:{}}}:{}),updatedAt:serverTimestamp()},{merge:true});
@@ -110,6 +111,12 @@ else{
     const d=snap.data();preset=presets[d.theme?.preset]?d.theme.preset:'natural';bannerData=d.banner?.imageData||'';$('banner-enabled').checked=d.banner?.hiddenDefault!==true&&(!!bannerData?d.banner?.enabled!==false:true);$('banner-link-mode').value=['none','product','url'].includes(d.banner?.linkMode)?d.banner.linkMode:'none';if(d.banner?.linkMode==='product')$('banner-product').value=d.banner.linkValue||'';if(d.banner?.linkMode==='url')$('banner-url').value=d.banner.linkValue||'';setRadio('discount-mode',d.discount?.mode||'none');$('discount-value').value=d.discount?.value||'';$('discount-minimum').value=d.discount?.minSpend||'';$('discount-preorder').checked=d.discount?.applyToPreorder!==false;$('handoff-expiry').value=String([1,3,5,10].includes(Number(d.checkout?.handoffExpiryMinutes))?Number(d.checkout?.handoffExpiryMinutes):5);
     const n=d.novelty||{};$('novelty-enabled').checked=!!n.mode&&n.mode!=='none';setRadio('novelty-mode',n.mode==='none'?'all':n.mode||'all');$('novelty-name').value=n.name||'';$('novelty-minimum').value=n.minSpend||'';renderNoveltyProducts(noveltyProductEntries,Array.isArray(n.productIds)?n.productIds:(n.productId?[n.productId]:[]));updateNoveltyStatus(n);
    }else{$('handoff-expiry').value='5';renderNoveltyProducts(noveltyProductEntries,noveltyProductEntries.filter(p=>p.noveltyTarget===true).map(p=>p.id));updateNoveltyStatus({mode:'none'});}
+   await window.MEB_PLAN?.ready();
+   if(!window.MEB_PLAN?.isPro()){
+    for(const b of document.querySelectorAll('#swatches button')){if(!window.MEB_PLAN.freeColors.includes(b.dataset.preset)){b.disabled=true;b.title='Pro.限定カラー';}}
+    const novelty=$('novelty-enabled');novelty.disabled=true;novelty.checked=false;for(const el of document.querySelectorAll('#novelty-fields input,#novelty-fields select,#novelty-fields button'))el.disabled=true;
+    if(!window.MEB_PLAN.freeColors.includes(preset))preset='natural';
+   }
    previewTheme();previewBanner();fields();bannerFields();$('loading').hidden=true;$('shell').hidden=false;$('save').disabled=false;
   }catch(err){console.error(err);$('loading').textContent='設定情報を読み込めませんでした。通信環境とFirestoreルールをご確認ください。';}
  });}catch(err){$('loading').textContent='Firebaseを初期化できませんでした。';}

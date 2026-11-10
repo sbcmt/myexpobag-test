@@ -7,6 +7,9 @@ const firebase=window.MEB_FIREBASE_CONFIG||{};
 const loginUrl=new URL('./login.html',location.href).href;
 const brandSetupUrl=new URL('./brand-setup.html',location.href).href;
 const maxProducts=300;
+const isPro=()=>window.MEB_PLAN?.isPro()===true;
+const productCap=()=>isPro()?300:10;
+function proOnly(feature){return window.MEB_PLAN?.requirePro(feature)===true;}
 let db,user=null,brand=null,products=new Map(),categories=[],importData=null,busy=false,brandSettingsExists=false,noveltyIds=new Set();
 let publishedProductsById=new Map(),publishedBundles=[],publishedCatalogAt=null,hasPublishedSnapshot=false,forcePending=false,publishedCategories=[];
 let publishedStockQuantities={},publishedVariantQuantities={};
@@ -19,7 +22,31 @@ const brandSettingsRef=()=>doc(db,'brandSettings',brand.slug);
 const trim=v=>String(v??'').trim();
 const yen=n=>'¥'+Number(n).toLocaleString('ja-JP');
 function status(message,error=false){const e=$('status');e.textContent=message;e.className='status'+(error?' error':'');e.hidden=false;}
-function refreshActionButtons(){for(const id of ['product-save','import-save','images-save','publish-catalog'])$(id).disabled=busy||imageProcessing||(id==='import-save'&&!importData)||(id==='images-save'&&!imagesReady.length);for(const b of document.querySelectorAll('.tab-save-button'))b.disabled=busy||imageProcessing;if(user)categoryOptions();}
+function refreshActionButtons(){for(const id of ['product-save','import-save','images-save','publish-catalog'])$(id).disabled=busy||imageProcessing||(id==='import-save'&&(!importData||!isPro()))||(id==='images-save'&&!imagesReady.length);for(const b of document.querySelectorAll('.tab-save-button'))b.disabled=busy||imageProcessing;if(user)categoryOptions();}
+function applyFreePlanUI(){
+ const paid=isPro();
+ for(const id of ['panel-preorder','panel-combo','panel-csv']){
+  const panel=$(id);if(!panel)continue;
+  panel.dataset.planLocked=String(!paid);
+  let note=panel.querySelector('.plan-restriction');
+  if(!note){note=document.createElement('p');note.className='plan-restriction';note.style.cssText='background:#eef3f6;border:1px solid #c9d9e2;border-radius:9px;padding:11px;font-size:13px;font-weight:700;color:#314f60';panel.prepend(note);}
+  note.hidden=paid;note.textContent='この設定はPro.限定です。Free版でも項目の確認はできますが、変更はできません。';
+  for(const control of panel.querySelectorAll('input,select,textarea,button')){
+   if(control.classList.contains('tab-save-button'))continue;
+   if(!paid)control.disabled=true;
+   else if(control.dataset.planDisabled==='true'){control.disabled=false;delete control.dataset.planDisabled;}
+   if(!paid)control.dataset.planDisabled='true';
+  }
+ }
+ const parent=$('product-preorder-all');if(parent)parent.disabled=!paid;
+ const second=$('product-image-2');if(second){const block=second.closest('.photo-slot');if(block)block.hidden=!paid;second.disabled=!paid;}
+ for(const cb of $('variant-rows').querySelectorAll('.variant-preorder'))cb.disabled=!paid;
+ const tabCsv=$('tab-csv'),tabReserve=$('tab-preorder'),tabCombo=$('tab-combo');
+ for(const el of [tabCsv,tabReserve,tabCombo])if(el)el.title=paid?'':'Pro.限定機能';
+ const countHelp=document.querySelector('#panel-csv .row .muted');if(countHelp)countHelp.textContent='1回300商品まで';
+ for(const id of ['download-csv','sample-csv','export-csv','import-file'])if($(id))$(id).disabled=!paid;
+ refreshActionButtons();
+}
 function setBusy(flag){busy=flag;refreshActionButtons();}
 function money(value,label,optional=false){
  const v=trim(value);if(optional&&v==='')return null;
@@ -122,6 +149,7 @@ async function imageBulkCheck(){
  finally{imageProcessing=false;refreshActionButtons();}
 }
 async function saveBulkImages(){
+ if(!proOnly('画像ZIP一括登録'))return;
  if(busy||!imagesReady.length)return;
  const toSave=imagesReady.slice();if(!confirm(toSave.length+'件の画像を商品IDに紐づけて保存しますか？既存画像は上書きします。'))return;
  setBusy(true);let ok=0;const errors=[];
@@ -195,6 +223,7 @@ function resetTotalStockState(value=''){
 }
 $('product-stock').addEventListener('input',()=>{if(!totalAutoMode)manualTotalDraft=$('product-stock').value;});
 $('variant-rows').addEventListener('input',updateTotalStockField);
+$('variant-rows').addEventListener('change',()=>{if(!isPro())for(const input of $('variant-rows').querySelectorAll('.variant-preorder'))input.checked=false;});
 function parseVariants(value){
  const input=trim(value);if(!input)return [];
  const entries=input.split('|').map(v=>trim(v)).filter(Boolean);
@@ -401,7 +430,7 @@ function axisSpec(){
  const ax2=[...new Set(rows.map(x=>trim(x.querySelector('.variant-axis2').value)).filter(Boolean))];
  return {axis1Name:trim($('axis1-name').value),axis1Values:ax1,axis2Name:trim($('axis2-name').value),axis2Values:ax2};
 }
-$('add-variant').addEventListener('click',()=>{if($('variant-rows').children.length>=MAX_VARIANTS){status('バリエーションは100件以内にしてください。',true);return;}const el=variantRow();$('variant-rows').append(el);updateTotalStockField();updateVariantVisibility();toggleRelease();el.querySelector('.variant-axis1').focus();});
+$('add-variant').addEventListener('click',()=>{if($('variant-rows').children.length>=MAX_VARIANTS){status('バリエーションは100件以内にしてください。',true);return;}const el=variantRow();$('variant-rows').append(el);if(!isPro()){const pre=el.querySelector('.variant-preorder');if(pre)pre.disabled=true;}updateTotalStockField();updateVariantVisibility();toggleRelease();el.querySelector('.variant-axis1').focus();});
 const bulkYear=$('bulk-year'),bulkMonth=$('bulk-month');
 for(let y=new Date().getFullYear();y<=new Date().getFullYear()+20;y++){const option=document.createElement('option');option.value=String(y);option.textContent=y+'年';bulkYear.append(option);}
 for(let m=1;m<=12;m++){const option=document.createElement('option');option.value=String(m);option.textContent=m+'月';bulkMonth.append(option);}
@@ -688,7 +717,11 @@ function toFirestore(p,original){return {...p,createdAt:original?.createdAt||ser
 async function saveProduct(event){
  event.preventDefault();if(busy||imageProcessing||!user)return;
  let p;try{p=inputData();}catch(err){status(err.message,true);focusProblemTab(err);return;}
- if(!products.has(p.id)&&products.size>=maxProducts){status('登録上限300商品です。',true);return;}
+ if(!products.has(p.id)&&products.size>=productCap()){status('このプランの商品登録上限は'+productCap()+'商品です。',true);return;}
+ if(!isPro() && (p.preorder===true||p.preorderAll===true||(p.variants||[]).some(v=>v.preorder===true)||(p.combos||[]).length||p.comboProductId)){
+  status('Free版では予約販売・組合せ販売を登録できません。Pro.限定機能です。',true);return;
+ }
+ if(!isPro()&&(pendingImages[1]||$('product-image-delete-2').checked)){status('Free版の画像は1商品1枚までです。',true);return;}
  const nextCategories=categories.includes(p.categoryName)?categories:[...categories,p.categoryName];
  if(nextCategories.length>80){status('カテゴリは80件以内にしてください。',true);return;}
  setBusy(true);
@@ -699,6 +732,7 @@ async function saveProduct(event){
    const old=await getDoc(imageRef(p.id)),imageData=old.exists()?old.data().imageData:'',imageData2=old.exists()?old.data().imageData2:'';
    const result=[imageData,imageData2].map((x,slot)=>$(imageId('product-image-delete',slot)).checked?'':(pendingImages[slot]===undefined?x:pendingImages[slot]));
    if(!result[0]&&result[1]){result[0]=result[1];result[1]='';}
+   if(!isPro()&&result[1])throw Error('Free版では画像を1枚まで登録できます。');
    if(result.some(x=>x&&x.length>IMAGE_DATA_LIMIT))throw Error('画像の保存容量が上限を超えています。');
    if(result.some(Boolean))batch.set(imageRef(p.id),{productId:p.id,imageData:result[0]||'',imageData2:result[1]||'',updatedAt:serverTimestamp()});
    else if(old.exists())batch.delete(imageRef(p.id));
@@ -816,6 +850,7 @@ async function fileChanged(){
  }catch(err){status(err.message,true);}
 }
 async function importProducts(){
+ if(!proOnly("CSV一括登録"))return;
  if(!importData||busy)return;
  const rows=importData;const newCategories=[...new Set([...categories,...rows.map(p=>p.categoryName)])];
  if(!confirm(rows.length+'商品の登録・上書きを実行しますか？'))return;
@@ -845,6 +880,7 @@ async function publishCatalog({automatic=false,allowBusy=false}={}){
    getDocsFromServer(coll()),getDocFromServer(catRef()),getDocFromServer(doc(db,'publishedCatalogs',brand.slug))
   ]);
   const source=drafts.docs.map(x=>x.data());
+  if(!isPro()&&(source.length>10||source.some(p=>p.preorder||p.preorderAll||(p.variants||[]).some(v=>v.preorder)||(p.combos||[]).length)))throw Error('Free版の利用上限またはPro.限定商品が含まれています。');
   for(const item of source.filter(p=>p.active!==false)){const rows=item.variants?.length?item.variants:[item];for(const v of rows)if(v.preorder===true&&(!Number.isInteger(v.releaseYear)||!Number.isInteger(v.releaseMonth)||!validPeriods.includes(v.releasePeriod)||!Number.isInteger(v.reservationStock)))throw Error('予約商品の年月・時期・予約品在庫が未設定です：'+item.name+' / '+(v.name||'なし'));}
   const visible=source.filter(productRecord=>productRecord.active!==false && /^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$/.test(productRecord.id));
   const ids=new Set(visible.map(productRecord=>productRecord.id));
@@ -877,7 +913,7 @@ async function publishCatalog({automatic=false,allowBusy=false}={}){
    const imageSnap=await getDocFromServer(imageRef(productRecord.id));
    if(imageSnap.exists()){
     const data=imageSnap.data(),image=data.imageData,image2=data.imageData2||'';
-    if(typeof image==='string'&&image.length<=IMAGE_DATA_LIMIT&&/^data:image\/(webp|jpeg);base64,/.test(image))uploaded.push({id:productRecord.id,image,image2:typeof image2==='string'&&image2.length<=IMAGE_DATA_LIMIT&&/^data:image\/(webp|jpeg);base64,/.test(image2)?image2:''});
+    if(typeof image==='string'&&image.length<=IMAGE_DATA_LIMIT&&/^data:image\/(webp|jpeg);base64,/.test(image))uploaded.push({id:productRecord.id,image,image2:isPro()&&typeof image2==='string'&&image2.length<=IMAGE_DATA_LIMIT&&/^data:image\/(webp|jpeg);base64,/.test(image2)?image2:''});
    }
   }
   publicationStage='画像アップロード';
@@ -967,9 +1003,9 @@ for(let slot=0;slot<2;slot++){$(imageId('product-image',slot)).addEventListener(
 $('images-import').addEventListener('change',imageBulkCheck);$('images-save').addEventListener('click',saveBulkImages);
 $('category-form').addEventListener('submit',addCategory);$('refresh-products').addEventListener('click',async()=>{if(await refresh())status('登録情報を更新しました。');});
 $('import-file').addEventListener('change',fileChanged);$('import-save').addEventListener('click',importProducts);
-$('download-csv').addEventListener('click',()=>csvFile('MY_EXPO_BAG_商品登録テンプレート.csv',[headers]));
-$('sample-csv').addEventListener('click',()=>csvFile('MY_EXPO_BAG_商品登録_入力例.csv',[headers,...sample]));
-$('export-csv').addEventListener('click',()=>csvFile('MY_EXPO_BAG_登録商品.csv',[headers,...spreadsheetRows()]));
+$('download-csv').addEventListener('click',()=>isPro()&&csvFile('MY_EXPO_BAG_商品登録テンプレート.csv',[headers]));
+$('sample-csv').addEventListener('click',()=>isPro()&&csvFile('MY_EXPO_BAG_商品登録_入力例.csv',[headers,...sample]));
+$('export-csv').addEventListener('click',()=>isPro()&&csvFile('MY_EXPO_BAG_登録商品.csv',[headers,...spreadsheetRows()]));
 const configured=['apiKey','authDomain','projectId','appId'].every(k=>typeof firebase[k]==='string'&&firebase[k].trim());
 if(!configured){$('loading').textContent='Firebaseの接続設定がありません。';document.documentElement.classList.remove('auth-pending');}
 else try{
@@ -978,7 +1014,7 @@ else try{
   if(!u){location.replace(loginUrl);return;}
   try{const snap=await getDoc(doc(db,'brands',u.uid));if(!snap.exists()){location.replace(brandSetupUrl);return;}
    const b=snap.data();if(b.ownerUid!==u.uid||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(b.slug))throw Error('brand mismatch');
-   user=u;brand=b;$('brand-label').textContent=b.displayName+'　｜　v1.0.1';const publicLink=new URL('./index.html',location.href);publicLink.searchParams.set('brand',b.slug);$('public-customer-link').href=publicLink.href;await refresh();$('loading').hidden=true;$('shell').hidden=false;document.documentElement.classList.remove('auth-pending');const requestedId=new URLSearchParams(location.search).get('edit');if(requestedId&&products.has(requestedId))editProduct(requestedId);
+   user=u;brand=b;await window.MEB_PLAN?.ready();$('brand-label').textContent=b.displayName+'　｜　v1.0.1';const publicLink=new URL('./index.html',location.href);publicLink.searchParams.set('brand',b.slug);$('public-customer-link').href=publicLink.href;await refresh();applyFreePlanUI();$('loading').hidden=true;$('shell').hidden=false;document.documentElement.classList.remove('auth-pending');const requestedId=new URLSearchParams(location.search).get('edit');if(requestedId&&products.has(requestedId))editProduct(requestedId);
   }catch(err){console.error(err);$('loading').textContent='ブランド情報を読み込めません。Firestoreルールをご確認ください。';document.documentElement.classList.remove('auth-pending');}
  },()=>{$('loading').textContent='ログイン情報を確認できませんでした。';document.documentElement.classList.remove('auth-pending');});
 }catch(err){$('loading').textContent='Firebaseを読み込めませんでした。';document.documentElement.classList.remove('auth-pending');}
