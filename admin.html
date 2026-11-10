@@ -76,6 +76,7 @@
 </div>
 </details>
 <a class="menu-link" href="./account.html" id="account-link"><span>アカウント情報</span><span aria-hidden="true">›</span></a>
+<a class="menu-link" href="./billing.html" id="meb-billing-menu"><span id="meb-billing-menu-label">Pro.にアップグレード</span><span aria-hidden="true">›</span></a>
 <a class="menu-link" href="./index.html" id="customer-page-link" rel="noopener noreferrer" target="_blank"><span>お客様ページを見る</span><span aria-hidden="true">↗</span></a>
 <div id="customer-browser-help" hidden>
 <p class="muted">ホーム画面のアプリからSafari等が開かない場合は、URLをコピーしてブラウザのアドレス欄に貼り付けてください。</p>
@@ -197,6 +198,15 @@
           catch{window.prompt('このURLをコピーしてSafari等で開いてください。',href);status.textContent='URLを表示しました。';}
         });
       }
+      // Free users can upgrade; active Pro. and tester users can review their plan.
+      // Reuse the server-verified entitlement state, without changing permissions.
+      const billingLabel=document.getElementById('meb-billing-menu-label');
+      const updateBillingMenuLabel=()=>{
+        if(!billingLabel)return;
+        billingLabel.textContent=window.MEB_PLAN?.isPro?.()?'プラン・お支払い':'Pro.にアップグレード';
+      };
+      document.addEventListener('meb-plan-updated',updateBillingMenuLabel);
+      updateBillingMenuLabel();
       // The customer link is set from the authenticated brand by admin-auth.js,
       // never from a visitor-controlled URL parameter.
     })();
