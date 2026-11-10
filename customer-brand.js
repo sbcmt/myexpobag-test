@@ -130,7 +130,8 @@ window.MEB_LOAD_CUSTOMER_BRAND = async function loadBrand(rawSlug) {
   const rawShipping=settings?.shipping||{};
   const shipping={mode:['threshold','prefecture'].includes(rawShipping.mode)?rawShipping.mode:'all',threshold:Math.max(0,Math.floor(Number(rawShipping.threshold)||0)),charge:Math.max(0,Math.floor(Number(rawShipping.charge)||0)),rates:rawShipping.rates&&typeof rawShipping.rates==='object'?rawShipping.rates:{}};
   const noveltyMode=['all','minimum','product'].includes(settings?.novelty?.mode)?settings.novelty.mode:'none';
-  const noveltyId=noveltyMode==='product'&&productIds.has(settings?.novelty?.productId)?settings.novelty.productId:'';
+  const noveltyIds=noveltyMode==='product'?[...new Set((Array.isArray(settings?.novelty?.productIds)?settings.novelty.productIds:[settings?.novelty?.productId]).filter(id=>typeof id==='string'&&productIds.has(id)))].slice(0,300):[];
+  const noveltyId=noveltyIds[0]||'';
   const checkout={handoffExpiryMinutes:[1,3,5,10].includes(Number(settings?.checkout?.handoffExpiryMinutes))?Number(settings.checkout.handoffExpiryMinutes):5};
   return {
     version:'1.0.1',ownerBrandId:handle.brandId,
@@ -141,7 +142,7 @@ window.MEB_LOAD_CUSTOMER_BRAND = async function loadBrand(rawSlug) {
       appPurchaseDiscountMode:safeDiscount,appPurchaseDiscountValue:discountValue,appPurchaseDiscountMinSpend:discountMinSpend,appDiscountApplyToPreorder,
       banner:{enabled:!bannerHidden,imageData:bannerImage,link:bannerLink}},
     categories,products,bundles,shipping,checkout,
-    novelty:{enabled:noveltyMode!=='none',mode:noveltyMode,name:noveltyMode!=='none'?String(settings.novelty.name||''):'',minSpend:noveltyMode==='minimum'?settings.novelty.minSpend:0,productId:noveltyId},
+    novelty:{enabled:noveltyMode!=='none',mode:noveltyMode,name:noveltyMode!=='none'?String(settings.novelty.name||''):'',minSpend:noveltyMode==='minimum'?settings.novelty.minSpend:0,productId:noveltyId,productIds:noveltyIds},
     line:{enabled:false}
   };
 };

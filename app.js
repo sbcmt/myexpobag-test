@@ -169,8 +169,9 @@
   const discountCondition=()=>{const d=discountOffer();return d.minSpend>0?`（税込${yen(d.minSpend)}以上が対象）`:'';};
   const discountText=()=>{const d=discountOffer();return d.mode==='percent'?`${d.value}%OFF`:d.mode==='amount'?`${yen(d.value)}引き`:'';};
   // Gift thresholds use the tax-included total AFTER combo discounts, BEFORE app discounts.
-  const giftFor=(amount,lines=cartLines())=>{const n=cfg.novelty||{};return n.enabled && (n.mode==='all'||n.mode==='minimum'&&amount>=n.minSpend||n.mode==='product'&&lines.some(line=>line.id===n.productId));};
-  const giftTag=p=>cfg.novelty?.enabled&&cfg.novelty.mode==='product'&&cfg.novelty.productId===p.id?'<span class="novelty-tag">ノベルティ対象商品</span>':'';
+  const noveltyMatches=id=>(Array.isArray(cfg.novelty?.productIds)?cfg.novelty.productIds:[cfg.novelty?.productId]).includes(id);
+  const giftFor=(amount,lines=cartLines())=>{const n=cfg.novelty||{};return n.enabled && (n.mode==='all'||n.mode==='minimum'&&amount>=n.minSpend||n.mode==='product'&&lines.some(line=>noveltyMatches(line.id)));};
+  const giftTag=p=>cfg.novelty?.enabled&&cfg.novelty.mode==='product'&&noveltyMatches(p.id)?'<span class="novelty-tag">ノベルティ対象商品</span>':'';
   const giftCaution='ノベルティの数量には限りがあります。なくなり次第終了します';
   const preorderLines=()=>cartLines().filter(line=>isPreorder(line.product,line.color));
   const prefOptions=()=>window.MEB_SHIPPING.prefectures.map(pref=>`<option value="${esc(pref)}" ${state.shippingPrefecture===pref?'selected':''}>${esc(pref)}</option>`).join('');

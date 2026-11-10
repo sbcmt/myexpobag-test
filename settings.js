@@ -1,10 +1,10 @@
 /** MY EXPO BAG v1.0.1 — owner-authenticated settings (no customer PII). */
 import {initializeApp,getApps,getApp} from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
 import {getAuth,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
-import {getFirestore,doc,getDoc,getDocFromServer,setDoc,serverTimestamp} from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
+import {getFirestore,doc,getDoc,getDocs,collection,getDocFromServer,setDoc,serverTimestamp} from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 const $=id=>document.getElementById(id);
 const presets={natural:{label:'フォレスト',main:'#315746',sub:'#F2EEE6',text:'#26372F'},monotone:{label:'モノトーン',main:'#252932',sub:'#F0F1F3',text:'#252932'},urban:{label:'ネイビー',main:'#274D82',sub:'#EEF3FA',text:'#1C2D42'},soft:{label:'ローズ',main:'#A04C67',sub:'#FAF0F3',text:'#432D37'},active:{label:'テラコッタ',main:'#A9472B',sub:'#FFF2E2',text:'#3C2E25'},lavender:{label:'ラベンダー',main:'#765E9A',sub:'#F3EFF9',text:'#33283F'},sand:{label:'サンド',main:'#806544',sub:'#F9F4E8',text:'#3D3325'},peach:{label:'ピーチミルク',main:'#F38FB8',sub:'#FFF3FA',text:'#513447'},mint:{label:'ミント',main:'#307C75',sub:'#EAF8F4',text:'#1D4542'},slate:{label:'スレートブルー',main:'#385773',sub:'#EDF3F8',text:'#253847'}};
-let db,owner,slug='',bannerData='',preset='natural',busy=false,settingsExists=false;
+let db,owner,slug='',bannerData='',preset='natural',busy=false,settingsExists=false,noveltyProductEntries=[];
 function status(s,error=false){$('status').textContent=s;$('status').className='status '+(error?'error':'good');}
 function previewTheme(){const c=presets[preset],head=$('theme-preview-head'),button=$('theme-preview-button');head.style.color=c.text;head.style.background=c.sub;button.style.color='#fff';button.style.background=c.main;[...$('swatches').children].forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.preset===preset)));}
 for(const [key,c] of Object.entries(presets)){const b=document.createElement('button');b.type='button';b.className='swatch';b.dataset.preset=key;b.innerHTML='<span class="swatch-dot" style="background:'+c.main+'"></span><span>'+c.label+'</span>';b.onclick=()=>{preset=key;previewTheme()};$('swatches').append(b)}previewTheme();
@@ -21,6 +21,20 @@ function noveltySummary(n){
  return mode==='none'?'ノベルティ設定：OFF':`ノベルティ設定：ON（${label}）`;
 }
 function updateNoveltyStatus(n){const el=$('novelty-saved-state');if(el)el.textContent=noveltySummary(n);}
+function selectedNoveltyIds(){return [...document.querySelectorAll('#novelty-products input[type="checkbox"]:checked')].map(input=>input.value);}
+function updateNoveltyCount(){const el=$('novelty-product-count');if(el)el.textContent=selectedNoveltyIds().length+'商品選択中';}
+function renderNoveltyProducts(entries,selectedIds=[]){
+ const box=$('novelty-products');box.replaceChildren();const active=new Set(selectedIds);
+ if(!entries.length){const message=document.createElement('p');message.className='help';message.style.padding='12px';message.textContent='登録済みの商品がありません。商品登録後、ここから対象を選べます。';box.append(message);updateNoveltyCount();return;}
+ for(const p of entries){
+  const row=document.createElement('label');row.className='novelty-product-row';
+  const title=document.createElement('span');title.className='novelty-product-title';title.textContent=p.name+(p.active===false?'（非表示）':'');
+  const code=document.createElement('span');code.className='novelty-product-code';code.textContent='商品ID：'+p.id;title.append(code);
+  const input=document.createElement('input');input.type='checkbox';input.value=p.id;input.checked=active.has(p.id);input.setAttribute('aria-label',p.name+'をノベルティ対象にする');input.addEventListener('change',updateNoveltyCount);
+  row.append(title,input);box.append(row);
+ }
+ updateNoveltyCount();
+}
 const defaultBanner='./assets/myexpobag-default-banner.webp';
 function previewBanner(){
  $('banner-preview').hidden=false;
@@ -49,7 +63,7 @@ $('save').onclick=async()=>{
  try{
   const mode=radio('discount-mode');const value=mode==='none'?0:positive('discount-value');const discountMinSpend=mode==='none'?0:positive('discount-minimum');if(mode==='percent'&&value>100)throw Error('割引率は1〜100％です。');if(value>100000000)throw Error('割引額の上限は1億円です。');
   const novMode=$('novelty-enabled').checked?radio('novelty-mode'):'none';const name=novMode==='none'?'':$('novelty-name').value.trim();if(novMode!=='none'&&!name)throw Error('ノベルティ名を入力してください。');if([...name].length>50)throw Error('ノベルティ名は50文字以内です。');
-  const minSpend=novMode==='minimum'?positive('novelty-minimum'):0;const productId=novMode==='product'?$('novelty-product').value:'';if(novMode==='product'&&!productId)throw Error('ノベルティ対象商品を選択してください。');
+  const minSpend=novMode==='minimum'?positive('novelty-minimum'):0;const productIds=selectedNoveltyIds();const productId=productIds[0]||'';if(novMode==='product'&&!productIds.length)throw Error('ノベルティ対象商品を1点以上選択してください。');
   // A brand may use the built-in default banner without uploading any image.
   const linkMode=$('banner-link-mode').value;let linkValue='';
   if(linkMode==='product'){
@@ -66,14 +80,14 @@ $('save').onclick=async()=>{
   if(discountMinSpend>100000000)throw Error('割引の下限金額の上限は1億円です。');
   if(bannerData && (!/^data:image\/(?:webp|jpeg);base64,[A-Za-z0-9+/]+={0,2}$/.test(bannerData)||bannerData.length>210000))throw Error('バナー画像の保存形式が現在の仕様と異なります。画像を再登録してください。');
   busy=true;$('save').disabled=true;status('保存しています…');
-  const savedNovelty={mode:novMode,name,minSpend,productId};
+  const savedNovelty={mode:novMode,name,minSpend,productId,productIds};
   const handoffExpiryMinutes=Number($('handoff-expiry').value||5);
   await setDoc(doc(db,'brandSettings',slug),{brandId:owner.uid,slug,theme:{preset},banner:{enabled:$('banner-enabled').checked,hiddenDefault:!$('banner-enabled').checked&&!bannerData,imageData:bannerData,linkMode,linkValue},discount:{mode,value,minSpend:discountMinSpend,applyToPreorder:$('discount-preorder').checked},checkout:{handoffExpiryMinutes:[1,3,5,10].includes(handoffExpiryMinutes)?handoffExpiryMinutes:5},novelty:savedNovelty,...(!settingsExists?{shipping:{mode:'all',threshold:0,charge:0,rates:{}}}:{}),updatedAt:serverTimestamp()},{merge:true});
   settingsExists=true;
   // Verify the state on the server, not Firestore's local cache.
   const verified=await getDocFromServer(doc(db,'brandSettings',slug));
   const stored=verified.data()?.novelty;
-  if(!verified.exists()||stored?.mode!==novMode||stored?.name!==name||stored?.minSpend!==minSpend||stored?.productId!==productId){
+  if(!verified.exists()||stored?.mode!==novMode||stored?.name!==name||stored?.minSpend!==minSpend||stored?.productId!==productId||JSON.stringify(stored?.productIds||[])!==JSON.stringify(productIds)){
    throw Error('保存結果を確認できませんでした。画面を閉じずに再度保存内容をご確認ください。');
   }
   updateNoveltyStatus(stored);
@@ -88,12 +102,14 @@ else{
   try{
    const b=await getDoc(doc(db,'brands',user.uid));if(!b.exists()||b.data().ownerUid!==user.uid)throw Error('ブランド情報がありません。');
    slug=b.data().slug;const h=await getDoc(doc(db,'brandHandles',slug));if(!h.exists()||h.data().brandId!==user.uid)throw Error('ブランド認証に失敗しました。');owner=user;
-   const products=await getDoc(doc(db,'publishedCatalogs',slug));const list=Array.isArray(products.data()?.products)?products.data().products:[];
-   for(const p of list){for(const target of ['novelty-product','banner-product']){const option=document.createElement('option');option.value=p.id;option.textContent=p.id+'｜'+p.name;$(target).append(option)}}
+   const [draftSnap,publishedSnap]=await Promise.all([getDocs(collection(db,'brands',user.uid,'products')),getDoc(doc(db,'publishedCatalogs',slug))]);
+   noveltyProductEntries=draftSnap.docs.map(doc=>({...doc.data(),id:doc.id})).filter(p=>typeof p.name==='string'&&/^[A-Za-z0-9][A-Za-z0-9_-]{0,39}$/.test(p.id)).sort((a,b)=>a.name.localeCompare(b.name,'ja')||a.id.localeCompare(b.id));
+   const list=Array.isArray(publishedSnap.data()?.products)?publishedSnap.data().products:[];
+   for(const p of list){const option=document.createElement('option');option.value=p.id;option.textContent=p.id+'｜'+p.name;$('banner-product').append(option)}
    const snap=await getDocFromServer(doc(db,'brandSettings',slug));settingsExists=snap.exists();if(snap.exists()){
     const d=snap.data();preset=presets[d.theme?.preset]?d.theme.preset:'natural';bannerData=d.banner?.imageData||'';$('banner-enabled').checked=d.banner?.hiddenDefault!==true&&(!!bannerData?d.banner?.enabled!==false:true);$('banner-link-mode').value=['none','product','url'].includes(d.banner?.linkMode)?d.banner.linkMode:'none';if(d.banner?.linkMode==='product')$('banner-product').value=d.banner.linkValue||'';if(d.banner?.linkMode==='url')$('banner-url').value=d.banner.linkValue||'';setRadio('discount-mode',d.discount?.mode||'none');$('discount-value').value=d.discount?.value||'';$('discount-minimum').value=d.discount?.minSpend||'';$('discount-preorder').checked=d.discount?.applyToPreorder!==false;$('handoff-expiry').value=String([1,3,5,10].includes(Number(d.checkout?.handoffExpiryMinutes))?Number(d.checkout?.handoffExpiryMinutes):5);
-    const n=d.novelty||{};$('novelty-enabled').checked=!!n.mode&&n.mode!=='none';setRadio('novelty-mode',n.mode==='none'?'all':n.mode||'all');$('novelty-name').value=n.name||'';$('novelty-minimum').value=n.minSpend||'';$('novelty-product').value=n.productId||'';updateNoveltyStatus(n);
-   }else{$('handoff-expiry').value='5';updateNoveltyStatus({mode:'none'});}
+    const n=d.novelty||{};$('novelty-enabled').checked=!!n.mode&&n.mode!=='none';setRadio('novelty-mode',n.mode==='none'?'all':n.mode||'all');$('novelty-name').value=n.name||'';$('novelty-minimum').value=n.minSpend||'';renderNoveltyProducts(noveltyProductEntries,Array.isArray(n.productIds)?n.productIds:(n.productId?[n.productId]:[]));updateNoveltyStatus(n);
+   }else{$('handoff-expiry').value='5';renderNoveltyProducts(noveltyProductEntries,noveltyProductEntries.filter(p=>p.noveltyTarget===true).map(p=>p.id));updateNoveltyStatus({mode:'none'});}
    previewTheme();previewBanner();fields();bannerFields();$('loading').hidden=true;$('shell').hidden=false;$('save').disabled=false;
   }catch(err){console.error(err);$('loading').textContent='設定情報を読み込めませんでした。通信環境とFirestoreルールをご確認ください。';}
  });}catch(err){$('loading').textContent='Firebaseを初期化できませんでした。';}

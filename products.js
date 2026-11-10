@@ -7,14 +7,13 @@ const firebase=window.MEB_FIREBASE_CONFIG||{};
 const loginUrl=new URL('./login.html',location.href).href;
 const brandSetupUrl=new URL('./brand-setup.html',location.href).href;
 const maxProducts=300;
-let db,user=null,brand=null,products=new Map(),categories=[],importData=null,busy=false,brandSettingsExists=false;
+let db,user=null,brand=null,products=new Map(),categories=[],importData=null,busy=false,brandSettingsExists=false,noveltyIds=new Set();
 let pendingImages=[undefined,undefined],imageProcessing=false,imageTaskCount=0,imageRevision=0,imageSlotRevision=[0,0],imagesReady=[],imageKnown=new Set();
 const coll=()=>collection(db,'brands',user.uid,'products');
 const prodRef=id=>doc(db,'brands',user.uid,'products',id);
 const catRef=()=>doc(db,'brands',user.uid,'catalogSettings','main');
 const imageRef=id=>doc(db,'brands',user.uid,'productImages',id);
 const brandSettingsRef=()=>doc(db,'brandSettings',brand.slug);
-const selectedNoveltyIds=(overrides=new Map())=>{const merged=new Map(products);for(const [id,p] of overrides)merged.set(id,p);return [...merged.values()].filter(p=>p&&p.noveltyTarget===true).map(p=>p.id).sort();};
 const trim=v=>String(v??'').trim();
 const yen=n=>'¥'+Number(n).toLocaleString('ja-JP');
 function status(message,error=false){const e=$('status');e.textContent=message;e.className='status'+(error?' error':'');e.hidden=false;}
@@ -412,7 +411,7 @@ function productOf(fields){
 function inputData(){
  reservationFromTable();const id=trim($('product-id').value);
  const base=reserveFor('__base__');return productOf({id,name:$('product-name').value,categoryName:$('product-category').value,
-  price:$('product-price').value,eventPrice:$('product-event-price').value,variants:readVariants(id),variantAxes:axisSpec(),active:$('product-active').checked,noveltyTarget:$('product-novelty').checked,
+  price:$('product-price').value,eventPrice:$('product-event-price').value,variants:readVariants(id),variantAxes:axisSpec(),active:$('product-active').checked,noveltyTarget:noveltyIds.has(id),
   janCode:$('product-jan').value,stock:$('product-stock').value,...base,preorderAll:parentPreorderMode,combos:readCombos(id)});
 }
 function selectProductTab(name){
@@ -444,7 +443,7 @@ function productList(){
  for(const p of [...products.values()].sort((a,b)=>a.id.localeCompare(b.id,'ja'))){
   const row=document.createElement('div');row.className='product';
   const info=document.createElement('div');info.className='product-info';
-  const name=document.createElement('div');name.className='product-name';name.textContent=p.name+(p.active===false?'（非表示）':'')+(p.noveltyTarget===true?' 🎁ノベルティ対象':'');
+  const name=document.createElement('div');name.className='product-name';name.textContent=p.name+(p.active===false?'（非表示）':'');
   const meta=document.createElement('div');meta.className='product-meta';meta.textContent=[p.id,p.categoryName,yen(p.price),p.eventPrice!==null&&p.eventPrice!==undefined?'展示会 '+yen(p.eventPrice):'',(p.variants||[]).length?'バリエーション '+p.variants.length+'種':'',(p.preorder||(p.variants||[]).some(v=>v.preorder===true))&&p.releaseMonth?`${p.releaseMonth}月${p.releasePeriod}予定`:'',(p.variants||[]).length?((p.variants||[]).every(v=>v.stock===0)?'SOLD OUT':''):(p.stock===0?'SOLD OUT':''),].filter(Boolean).join(' ／ ');
   info.append(name,meta);const edit=document.createElement('button');edit.type='button';edit.textContent='編集';edit.addEventListener('click',()=>editProduct(p.id));
   const del=document.createElement('button');del.type='button';del.className='danger';del.textContent='削除';del.addEventListener('click',()=>deleteProduct(p.id));
@@ -462,7 +461,7 @@ function editProduct(id){
  if((p.variants||[]).length){for(const v of p.variants){reservationDrafts.set(trim(v.code).startsWith(p.id+'_')?trim(v.code).slice(p.id.length+1):v.code,{preorder:v.preorder===true,releaseYear:v.releaseYear??p.releaseYear??'',releaseMonth:v.releaseMonth??p.releaseMonth??'',releasePeriod:v.releasePeriod||p.releasePeriod||'',reservationStock:v.reservationStock??v.stock??''});}}
  else reservationDrafts.set('__base__',{preorder:p.preorder===true,releaseYear:p.releaseYear??'',releaseMonth:p.releaseMonth??'',releasePeriod:p.releasePeriod||'',reservationStock:p.reservationStock??p.stock??''});
  showVariants((p.variants||[]).map(v=>({code:trim(v.code).startsWith(p.id+'_')?trim(v.code).slice(p.id.length+1):v.code,name:v.name,price:v.price??'',eventPrice:v.eventPrice??'',stock:v.stock??'',janCode:v.janCode??'',axis1:v.axis1||'',axis2:v.axis2||''})));
- $('product-novelty').checked=p.noveltyTarget===true;$('product-jan').value=p.janCode||'';resetTotalStockState(p.stock??'');
+ $('product-jan').value=p.janCode||'';resetTotalStockState(p.stock??'');
  showCombos(existingCombos(p));$('product-active').checked=p.active!==false;
  pendingImages=[undefined,undefined];for(let slot=0;slot<2;slot++){ $(imageId('product-image',slot)).value='';$(imageId('product-image-delete',slot)).checked=false; }
  loadSavedImage(id,++imageRevision);$('edit-note').textContent='編集中：'+p.id+'（商品IDは変更できません）';selectProductTab('basic');$('product-form').scrollIntoView({behavior:'smooth',block:'start'});
@@ -470,7 +469,7 @@ function editProduct(id){
 function clearForm(){
  ++imageRevision;imageSlotRevision=[0,0];pendingImages=[undefined,undefined];imageTaskCount=0;imageProcessing=false;$('product-form').reset();totalAutoMode=false;manualTotalDraft='';reservationDrafts.clear();$('reservation-rows').replaceChildren();parentPreorderMode=false;$('product-preorder-all').checked=false;
  for(const id of ['axis1-name','axis2-name'])$(id).value='';
- showVariants();showCombos();$('product-id').readOnly=false;$('product-active').checked=true;$('product-novelty').checked=false;$('edit-note').textContent='新規登録';
+ showVariants();showCombos();$('product-id').readOnly=false;$('product-active').checked=true;$('edit-note').textContent='新規登録';
  for(let slot=0;slot<2;slot++){imagePreview('',slot);$(imageId('product-image-hint',slot)).textContent='画像未登録。';$(imageId('product-image',slot)).value='';$(imageId('product-image-delete',slot)).checked=false;}
  selectProductTab('basic');setBusy(busy);
 }
@@ -484,8 +483,6 @@ async function saveProduct(event){
  setBusy(true);
  try{
   const batch=writeBatch(db);batch.set(prodRef(p.id),toFirestore(p,products.get(p.id)));
-  const nextNoveltyIds=selectedNoveltyIds(new Map([[p.id,p]]));
-  if(brandSettingsExists)batch.set(brandSettingsRef(),{novelty:{productIds:nextNoveltyIds,productId:nextNoveltyIds[0]||''},updatedAt:serverTimestamp()},{merge:true});
   const imageChange=pendingImages.some(x=>x!==undefined)||[0,1].some(slot=>$(imageId('product-image-delete',slot)).checked);
   if(imageChange){
    const old=await getDoc(imageRef(p.id)),imageData=old.exists()?old.data().imageData:'',imageData2=old.exists()?old.data().imageData2:'';
@@ -520,8 +517,8 @@ async function removeCategory(name){
 async function deleteProduct(id){
  if(busy)return;const p=products.get(id);if(!p||!confirm('「'+p.name+'（'+id+'）」を削除しますか？'))return;
  setBusy(true);try{const batch=writeBatch(db);batch.delete(prodRef(id));batch.delete(imageRef(id));
-  const nextIds=selectedNoveltyIds(new Map([[id,{id,noveltyTarget:false}]]));
-  if(brandSettingsExists)batch.set(brandSettingsRef(),{novelty:{productIds:nextIds,productId:nextIds[0]||''},updatedAt:serverTimestamp()},{merge:true});await batch.commit();products.delete(id);imageKnown.delete(id);render();if($('product-id').value===id)clearForm();status('商品を削除しました。');}
+  const nextIds=[...noveltyIds].filter(productId=>productId!==id).sort();
+  if(brandSettingsExists&&noveltyIds.has(id))batch.set(brandSettingsRef(),{novelty:{productIds:nextIds,productId:nextIds[0]||''},updatedAt:serverTimestamp()},{merge:true});await batch.commit();noveltyIds=new Set(nextIds);products.delete(id);imageKnown.delete(id);render();if($('product-id').value===id)clearForm();status('商品を削除しました。');}
  catch(err){console.error(err);status('商品を削除できませんでした。',true);}finally{setBusy(false);}
 }
 // 商品一括登録はCSV専用。既存形式の見出しも読み取れるようにする。
@@ -538,7 +535,7 @@ function spreadsheetRows(){
  for(const p of [...products.values()].sort((a,b)=>a.id.localeCompare(b.id,'ja'))){
   const variants=p.variants?.length?p.variants:[null];
   const combos=existingCombos(p);
-  for(const v of variants)rows.push([p.categoryName,p.id,p.name,p.price,p.active===false?0:1,p.janCode||'',p.eventPrice??'',p.preorder?1:0,(p.variants||[]).length?(totalOfVariantStocks(p.variants)??''):(p.stock??''),v?.code||'',v?.name||'',v?.price??'',v?.eventPrice??'',combos[0]?.productId||'',combos[0]?.discount??'',combos[1]?.productId||'',combos[1]?.discount??'',combos[2]?.productId||'',combos[2]?.discount??'',(p.preorder||p.variants?.some(v=>v.preorder===true))?p.releaseMonth??'':'',(p.preorder||p.variants?.some(v=>v.preorder===true))?p.releasePeriod||'':'',v?.stock??'',typeof v?.preorder==='boolean'?(v.preorder?1:0):'',p.noveltyTarget===true?1:0,p.releaseYear??'',p.reservationStock??'',v?.janCode??'',v?.releaseYear??'',v?.releaseMonth??'',v?.releasePeriod||'',v?.reservationStock??'',p.variantAxes?.axis1Name||'',v?.axis1||'',p.variantAxes?.axis2Name||'',v?.axis2||'']);
+  for(const v of variants)rows.push([p.categoryName,p.id,p.name,p.price,p.active===false?0:1,p.janCode||'',p.eventPrice??'',p.preorder?1:0,(p.variants||[]).length?(totalOfVariantStocks(p.variants)??''):(p.stock??''),v?.code||'',v?.name||'',v?.price??'',v?.eventPrice??'',combos[0]?.productId||'',combos[0]?.discount??'',combos[1]?.productId||'',combos[1]?.discount??'',combos[2]?.productId||'',combos[2]?.discount??'',(p.preorder||p.variants?.some(v=>v.preorder===true))?p.releaseMonth??'':'',(p.preorder||p.variants?.some(v=>v.preorder===true))?p.releasePeriod||'':'',v?.stock??'',typeof v?.preorder==='boolean'?(v.preorder?1:0):'',noveltyIds.has(p.id)?1:0,p.releaseYear??'',p.reservationStock??'',v?.janCode??'',v?.releaseYear??'',v?.releaseMonth??'',v?.releasePeriod||'',v?.reservationStock??'',p.variantAxes?.axis1Name||'',v?.axis1||'',p.variantAxes?.axis2Name||'',v?.axis2||'']);
  }
  return rows;
 }
@@ -619,10 +616,11 @@ async function importProducts(){
  setBusy(true);
  try{const batch=writeBatch(db);
   for(const p of rows)batch.set(prodRef(p.id),toFirestore(p,products.get(p.id)));
-  const changes=new Map(rows.map(p=>[p.id,p]));const nextIds=selectedNoveltyIds(changes);
+  const nextIdsSet=new Set(noveltyIds);for(const item of rows){if(item.noveltyTarget===true)nextIdsSet.add(item.id);else nextIdsSet.delete(item.id);}
+  const nextIds=[...nextIdsSet].sort();
   if(brandSettingsExists)batch.set(brandSettingsRef(),{novelty:{productIds:nextIds,productId:nextIds[0]||''},updatedAt:serverTimestamp()},{merge:true});
   if(newCategories.length!==categories.length)batch.set(catRef(),{categories:newCategories,updatedAt:serverTimestamp()});
-  await batch.commit();for(const p of rows)products.set(p.id,{...products.get(p.id),...p});categories=newCategories;
+  await batch.commit();noveltyIds=new Set(nextIds);for(const p of rows)products.set(p.id,{...products.get(p.id),...p});categories=newCategories;
   importData=null;$('import-file').value='';$('import-preview').hidden=true;render();status(rows.length+'商品の一括登録が完了しました。');
  }catch(err){console.error(err);status('一括登録できませんでした。保存内容は更新されていません。',true);}finally{setBusy(false);}
 }
@@ -739,9 +737,9 @@ $('publish-catalog').addEventListener('click',()=>publishCatalog());
 async function refresh(){if(!user)return;try{
  const [catSnap,prodSnap,noveltySnap]=await Promise.all([getDoc(catRef()),getDocs(coll()),getDoc(brandSettingsRef())]);
  brandSettingsExists=noveltySnap.exists();
- const n=noveltySnap.data()?.novelty||{};const legacyId=!Array.isArray(n.productIds)?n.productId:'';
+ const n=noveltySnap.data()?.novelty||{};
  categories=catSnap.exists()&&Array.isArray(catSnap.data().categories)?catSnap.data().categories.filter(x=>typeof x==='string'):[];
- products=new Map(prodSnap.docs.map(snapshot=>{const p=snapshot.data();return [snapshot.id,{...p,noveltyTarget:p.noveltyTarget===true||(legacyId===snapshot.id&&p.noveltyTarget!==false)}];}));render();return true;
+ products=new Map(prodSnap.docs.map(snapshot=>[snapshot.id,snapshot.data()]));noveltyIds=new Set(noveltySnap.exists()?(Array.isArray(n.productIds)?n.productIds:(n.productId?[n.productId]:[])):[...products.values()].filter(p=>p.noveltyTarget===true).map(p=>p.id));render();return true;
  }catch(err){console.error(err);status('商品情報を読み込めませんでした。Firestoreルールをご確認ください。',true);return false;}}
 $('product-form').addEventListener('submit',saveProduct);$('product-clear').addEventListener('click',clearForm);
 for(let slot=0;slot<2;slot++){$(imageId('product-image',slot)).addEventListener('change',()=>onImageSelected(slot));$(imageId('product-image-delete',slot)).addEventListener('change',event=>{if(event.target.checked){pendingImages[slot]=undefined;$(imageId('product-image',slot)).value='';imagePreview('',slot);$(imageId('product-image-hint',slot)).textContent='保存時に削除します。';}});}

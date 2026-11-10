@@ -121,10 +121,9 @@
 <p class="hint">発売予定は1行で表示し、個別に変更できます。一括設定は予約チェックが入った行のみ反映します。予約在庫数は各行で個別に入力してください。</p>
 </section>
 <section class="product-tab-panel" id="panel-combo" role="tabpanel" aria-labelledby="tab-combo" hidden>
-<p class="tab-description">他の商品と同時購入した際の組合せ割引と、販促用ノベルティ対象を設定します。</p>
+<p class="tab-description">他の商品と同時購入した際の組合せ割引を設定します。</p>
 <div class="variant-block"><div class="toolbar"><strong>組合せ販売（任意）</strong><span class="muted" id="combo-count">0 / 3件</span></div><div id="combo-rows"></div><button id="add-combo" type="button">＋ 組合せ商品を追加</button><p class="hint" id="combo-entry-hint" hidden>最大3件。相手の商品IDと組合せ購入時の割引額を指定します。</p></div>
-<label class="checkline"><input id="product-novelty" type="checkbox"/> この商品をノベルティ対象商品にする（将来Pro.専用）</label>
-<p class="hint">ノベルティの配布条件・名称は「設定 → ノベルティ」で管理します。プランによる制限は有料化の段階で追加します。</p>
+
 </section>
 <section class="product-tab-panel" id="panel-csv" role="tabpanel" aria-labelledby="tab-csv" hidden><h3>CSV商品一括登録</h3>
 <div class="row" style="margin-bottom:12px"><button id="download-csv" type="button">CSVテンプレートをDL</button><button id="sample-csv" type="button">CSV入力例をDL</button><button id="export-csv" type="button">登録商品をCSVでDL</button></div>
@@ -173,6 +172,6 @@
   },15000);
 })();
 </script>
-<script onerror="window.MEB_PRODUCTS_STARTUP_ERROR?.()" src="./products.js?asset=20261110-ui-6tabs-variant-manual-v4" type="module"></script>
+<script onerror="window.MEB_PRODUCTS_STARTUP_ERROR?.()" src="./products.js?asset=20261110-novelty-settings-only-v1" type="module"></script>
 <div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
 </body></html>
