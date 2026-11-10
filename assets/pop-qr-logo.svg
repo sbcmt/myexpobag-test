@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2048" height="2048" viewBox="0 0 2048 2048">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1EA7FF"/>
+      <stop offset="50%" stop-color="#F63FC6"/>
+      <stop offset="100%" stop-color="#FF9B1A"/>
+    </linearGradient>
+    <filter id="soft" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="blur"/>
+      <feOffset dx="0" dy="3" result="off"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.15"/>
+      </feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g filter="url(#soft)" transform="translate(150,120)">
+    <path d="M 600 360 A 250 250 0 0 1 1100 360" fill="none" stroke="url(#g)" stroke-width="96" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 360 520 L 1340 520 Q 1385 520 1395 560 L 1510 1490 Q 1518 1535 1475 1535 L 225 1535 Q 182 1535 190 1490 L 305 560 Q 315 520 360 520 Z" fill="none" stroke="url(#g)" stroke-width="96" stroke-linejoin="round"/>
+    <path d="M 620 1070 C 710 1260, 1020 1260, 1110 1070" fill="none" stroke="url(#g)" stroke-width="96" stroke-linecap="round"/>
+  </g>
+</svg>

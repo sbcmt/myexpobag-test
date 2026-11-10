@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta name="robots" content="noindex,nofollow,noarchive">
+<link href="./assets/favicon-admin.png?v=20261016-icon-1" rel="icon" sizes="64x64" type="image/png"/>
+<link href="./assets/favicon-admin.ico?v=20261016-icon-1" rel="shortcut icon"/>
+<link href="./myexpobag_admin_icon_180.png?v=20261016-icon-1" rel="apple-touch-icon" sizes="180x180"/>
+<link href="./admin.webmanifest?v=20261016-icon-1" rel="manifest"/>
+<meta content="EXPO BAG管理" name="apple-mobile-web-app-title"/>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>MY EXPO BAG｜商品QR・プライスカード</title>
+<style>
+  :root{font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",Arial,sans-serif;color:#162530}
+  *{box-sizing:border-box}body{margin:0;background:#e9edf0}
+  .toolbar{background:#10202a;color:white;padding:14px max(16px,env(safe-area-inset-right,0px));display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .toolbar h1{font-size:16px;margin:0}.toolbar p{font-size:12px;margin:5px 0 0;color:#c5d2d9;line-height:1.5}
+  .actions{display:flex;gap:8px;flex-wrap:wrap}.actions button{border:1px solid #69818d;background:#1b3c4e;color:white;border-radius:8px;padding:10px 12px;font-weight:650;cursor:pointer}
+  .actions button.active{background:#fff;color:#152a35}
+  .notice{text-align:center;padding:10px 14px;font-size:12px;color:#576772;line-height:1.65}
+  .paper{width:210mm;min-height:297mm;margin:16px auto 22px;background:#fff;box-shadow:0 8px 30px #17293624}
+  .sheet{width:210mm;height:297mm;padding:7mm 12mm;display:grid;grid-template-columns:repeat(2,91mm);grid-template-rows:repeat(5,55mm);column-gap:4mm;row-gap:2mm;break-after:page;page-break-after:always}
+  .sheet:last-child{break-after:auto;page-break-after:auto}
+  .pricecard{width:91mm;height:55mm;border:.25mm solid #c9d3d8;position:relative;overflow:hidden;display:flex;background:#fff;break-inside:avoid}
+  .pricecard.unpublished::after{content:"未公開";position:absolute;top:0;right:0;padding:1.5mm 3mm;background:#ac2e35;color:#fff;font-size:8pt;font-weight:800;z-index:3}
+  .qr-area{width:31mm;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3mm 2mm;gap:1mm}
+  .qr-area img{width:25.5mm;height:25.5mm;image-rendering:pixelated}
+  .scan-note{font-size:6pt;color:#65767c;white-space:nowrap;text-align:center}
+  .information{min-width:0;flex:1;padding:3.5mm 3mm 2.8mm 1mm;display:flex;flex-direction:column;align-items:center;text-align:center;justify-content:flex-start;gap:.9mm}
+  .brand{font-size:7.4pt;font-weight:800;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item{font-size:11pt;font-weight:800;line-height:1.18;word-break:break-word;max-height:12mm;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:7mm}
+  .meta{font-size:7.4pt;color:#536470;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .price{margin-top:0;min-height:auto;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:.5mm}
+  .normal{font-size:7pt;color:#6c7a80;text-align:center}
+  .normal.strike{text-decoration:line-through}
+  .now{font-size:14pt;font-weight:800;letter-spacing:-.025em;white-space:nowrap;text-align:center}
+  .now.event{color:#b42b28}.now small{font-size:7pt;font-weight:700;margin-right:1.5mm}
+  .title-stack{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:9mm;max-width:100%;gap:.5mm}
+  .reservation-badge{display:inline-block;background:#d82f38;color:white!important;font-weight:900;line-height:1.25;border-radius:1mm;white-space:nowrap;vertical-align:middle}
+  .product-reservation{font-size:7pt;padding:.5mm 2.3mm;margin:0 auto}
+  .variant-reservation{font-size:5pt;padding:.15mm .8mm;margin-left:.6mm}
+  .variant-list{width:100%;margin-top:.8mm;display:flex;align-content:flex-start;justify-content:center;flex-wrap:wrap;gap:.8mm 1.1mm;overflow:hidden;flex:1;max-height:24mm}
+  .variant-name{font-size:7pt;color:#364955;display:inline-flex;gap:.1mm;align-items:center;white-space:normal;overflow-wrap:anywhere;text-align:left;line-height:1.15}
+  .variant-list.dense .variant-name{font-size:6.1pt}
+  .variant-list.very-dense .variant-name{font-size:5.2pt}
+  .pricecard.accent{border-color:#afbec6}
+  .pricecard.accent .qr-area{border-right:none}
+  .pricecard.accent .information{padding-top:9.7mm}
+  .pricecard.accent .brand{position:absolute;left:0;top:0;width:100%;padding:2mm 3mm;background:#12242f;color:#fff;letter-spacing:.06em}
+  .pricecard.accent .scan-note{color:#58636a}
+  .pricecard.accent .now.event{color:#bf3330}
+  @page{size:A4 portrait;margin:0}
+  @media print{body{background:white}.toolbar,.notice{display:none!important}.paper{margin:0;box-shadow:none;width:210mm;min-height:297mm}.sheet{page-break-after:always}.sheet:last-child{page-break-after:auto}}
+  @media screen and (max-width:850px){.paper{transform-origin:top left;transform:scale(.6);margin:10px 0 -100mm 2vw}}
+  @media screen and (max-width:480px){.paper{transform:scale(.43);margin-bottom:-166mm}}
+</style>
+<style id="meb-copyright-style">.meb-copyright{box-sizing:border-box;display:block;margin:16px auto 24px;padding:10px 14px;text-align:center;color:#8c98a0;font:11px/1.7 -apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;letter-spacing:.025em}@media print{.meb-copyright{display:none!important}}</style><link rel="stylesheet" href="./admin-navigation.css?v=20261016-v114"/>
+</head>
+<body>
+<header class="toolbar meb-admin-page-header meb-admin-page-header--pricecards">
+<div class="meb-admin-page-title"><h1>MY EXPO BAG｜プライスカード</h1></div>
+<a class="meb-admin-back" href="./admin.html">← 管理ページ</a>
+<div class="actions"><button id="white" type="button">ホワイト</button><button class="active" id="accent" type="button">アクセント</button><button id="print" type="button">印刷／PDF保存</button></div>
+</header>
+
+<p class="notice" id="pricecards-notice" role="status" aria-live="polite">商品情報を読み込み中…</p>
+<div id="paper-output"></div>
+<script src="./firebase-config.js"></script><script src="./qr.js"></script>
+<script src="./pricecards-live.js?asset=20261018-pricecard-loading-v122" type="module"></script>
+<div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
+</body>
+</html>

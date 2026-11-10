@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 560" role="img" aria-label="chair">
+ <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#E2E5DC"/><stop offset="1" stop-color="#CCD7CF"/></linearGradient>
+ <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#627069"/><stop offset="0.55" stop-color="#253b32"/><stop offset="1" stop-color="#142b25"/></linearGradient>
+ <linearGradient id="fabric" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#DACDB4"/><stop offset="1" stop-color="#B5A68A"/></linearGradient>
+ <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="15"/></filter>
+ </defs>
+ <rect width="560" height="560" fill="url(#bg)"/>
+ <path d="M-50 110 Q240 50 620 148" stroke="#fff" opacity=".18" stroke-width="110" fill="none"/>
+ <ellipse cx="280" cy="450" rx="155" ry="21" fill="#536454" opacity=".17" filter="url(#shadow)"/>
+ 
+ <path d="M216 155 L181 430 M349 155 L398 430" fill="none" stroke="#394A41" stroke-width="17" stroke-linecap="round"/>
+ <path d="M190 280 L375 430 M374 277 L190 430" fill="none" stroke="#576158" stroke-width="12" stroke-linecap="round"/>
+ <path d="M204 160 Q280 128 364 163 L343 308 Q275 337 222 306Z" fill="url(#fabric)" stroke="#8A806C" stroke-width="5"/>
+ <path d="M210 164 Q280 142 356 166 M220 298 Q283 319 342 300" stroke="#F5EBD3" stroke-width="6" opacity=".7" fill="none"/>
+ <path d="M215 312 Q279 343 355 311 L382 353 Q285 403 181 355Z" fill="#C0B094" stroke="#7D7564" stroke-width="5"/>
+ <circle cx="190" cy="430" r="8" fill="#151E1A"/><circle cx="397" cy="430" r="8" fill="#151E1A"/>
+
+ </svg>

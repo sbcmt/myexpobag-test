@@ -1,0 +1,53 @@
+/* Shared admin navigation — single source of truth, all admin tools. */
+.meb-admin-page-header {
+  box-sizing:border-box!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  flex-wrap:nowrap!important;
+  gap:14px!important;
+  width:100%!important;
+  max-width:none!important;
+  min-height:72px!important;
+  margin:0!important;
+  padding:calc(12px + env(safe-area-inset-top,0px)) max(18px,env(safe-area-inset-right,0px)) 14px max(18px,env(safe-area-inset-left,0px))!important;
+  background:#101d26!important;
+  color:#fff!important;
+}
+.meb-admin-nav-host {padding:0!important;background:#101d26!important;}
+.meb-admin-page-title {min-width:0!important;flex:1 1 auto!important;color:#fff!important;}
+.meb-admin-page-title h1,.meb-admin-page-title strong {color:inherit;}
+.meb-admin-page-header .meb-admin-back {
+  display:inline-flex!important;box-sizing:border-box!important;
+  align-items:center!important;justify-content:center!important;
+  flex:0 0 auto!important;
+  position:static!important;
+  float:none!important;
+  margin:0!important;
+  width:126px!important;
+  min-height:42px!important;
+  padding:9px 12px!important;
+  border:1px solid #587382!important;
+  border-radius:9px!important;
+  background:#233e4c!important;
+  color:#fff!important;
+  text-decoration:none!important;
+  text-align:center!important;
+  font-size:13px!important;
+  font-weight:700!important;
+  line-height:1.4!important;
+  white-space:nowrap!important;
+}
+.meb-admin-page-header .meb-admin-back:hover,.meb-admin-page-header .meb-admin-back:focus-visible {background:#305869!important;outline-offset:2px;}
+.meb-admin-page-header--pricecards {display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;grid-template-rows:auto auto!important;grid-auto-flow:row!important;row-gap:10px!important;padding-top:14px!important;}
+.meb-admin-page-header--pricecards .meb-admin-page-title {grid-column:1;grid-row:1;}
+.meb-admin-page-header--pricecards .meb-admin-back {grid-column:2;grid-row:1;}
+.meb-admin-page-header--pricecards .actions {grid-column:1 / -1;grid-row:2;justify-content:flex-end;}
+@media(max-width:560px){
+  .meb-admin-page-header{gap:8px!important;padding-right:max(12px,env(safe-area-inset-right,0px))!important;padding-left:max(12px,env(safe-area-inset-left,0px))!important;}
+  .meb-admin-page-header .meb-admin-back {width:112px!important;padding:9px 7px!important;font-size:12px!important;}
+  .meb-admin-page-title h1,.meb-admin-page-title strong{font-size:15px!important;line-height:1.4!important;}
+}
+@media print{
+  .meb-admin-page-header,.meb-admin-nav-host{display:none!important;}
+}

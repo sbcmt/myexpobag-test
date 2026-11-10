@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta name="robots" content="noindex,nofollow,noarchive">
+<link rel="icon" type="image/png" sizes="64x64" href="./assets/favicon-customer.png?v=20261016-icon-1">
+<link rel="shortcut icon" href="./assets/favicon-customer.ico?v=20261016-icon-1">
+<link rel="apple-touch-icon" sizes="180x180" href="./myexpobag_icon_180.png?v=20261016-icon-1">
+<link rel="manifest" href="./manifest.webmanifest?v=20261016-icon-1">
+<meta name="apple-mobile-web-app-title" content="MyExpoBag">
+
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="theme-color" content="#315746"/>
+  <meta name="description" content="MY EXPO BAG — 展示会で気になった商品をひとつのBAGに。"/>
+  <title>MyExpoBag</title>
+  <!-- Home screen icon: place myexpobag_icon.png next to index.html -->
+  
+  
+  
+  
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+  <!-- Network-only service worker: no stale copies of app files are served. -->
+  <script>
+    (async () => {
+      'use strict';
+      // Displayed product version stays 1.0.1. Each launch fetches the real live files.
+      // No manual edit to release.json is required to detect an app/config update.
+      const files=['index.html','styles.css','firebase-config.js','customer-brand.js','customer-checkout.js','shipping-utils.js','qr.js','app.js'];
+      const cacheToken=String(Date.now())+'-'+Math.random().toString(36).slice(2,9);
+      const digest=text=>{
+        // Two independent lightweight 32-bit hashes. Only used for change detection.
+        let a=2166136261,b=0x9e3779b9;
+        for(let i=0;i<text.length;i++){
+          const c=text.charCodeAt(i);
+          a=Math.imul(a^c,16777619);
+          b=Math.imul(b^(c+i),2246822519);
+        }
+        return (a>>>0).toString(16)+'-'+(b>>>0).toString(16)+'-'+text.length;
+      };
+      const requestFile=async name=>{
+        const url='./'+name+'?meb_fresh='+cacheToken;
+        const response=await fetch(url,{cache:'no-store',redirect:'follow'});
+        if(!response.ok)throw new Error(name+' HTTP '+response.status);
+        return {
+          text:await response.text(),
+          etag:response.headers.get('ETag') || null
+        };
+      };
+      const status=message=>{
+        const target=document.getElementById('view');
+        if(target)target.textContent=message;
+      };
+      // Registration must NOT cache index.html, JS or product data. The worker is
+      // network-only, including for iPhone's standalone Home Screen launch.
+      if(location.protocol==='https:' && 'serviceWorker' in navigator){
+        navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'})
+          .then(reg=>reg.update().catch(()=>{}))
+          .catch(error=>console.warn('更新制御の登録に失敗:',error));
+      }
+      try{
+        const data=Object.create(null);
+        // Capture the actual bytes loaded into this session as an update baseline.
+        const all=await Promise.all(files.map(async name=>{
+          const record=await requestFile(name);
+          return [name,record];
+        }));
+        for(const [name,record] of all)data[name]=record.text;
+        window.MEB_ASSET_HASHES=Object.fromEntries(files.map(name=>[name,digest(data[name])]));
+        window.MEB_ASSET_ETAGS=Object.fromEntries(all.map(([name,record])=>[name,record.etag]));
+        window.MEB_DIGEST_TEXT=digest;
+        window.MEB_ASSET_FILES=files;
+        // Compatibility with current app data version; no longer an update signal.
+        window.MEB_CURRENT_BUILD='1.0.1';
+        const style=document.createElement('style');
+        style.setAttribute('data-meb-current-style','');
+        style.textContent=data['styles.css'];
+        document.head.appendChild(style);
+        if(document.readyState==='loading'){
+          await new Promise(resolve=>document.addEventListener('DOMContentLoaded',resolve,{once:true}));
+        }
+        const runScript=async filename=>{
+          const url=URL.createObjectURL(new Blob([data[filename]],{type:'text/javascript'}));
+          try{
+            await new Promise((resolve,reject)=>{
+              const script=document.createElement('script');
+              script.src=url;
+              script.onload=resolve;
+              script.onerror=()=>reject(new Error(filename));
+              document.body.appendChild(script);
+            });
+          }finally{URL.revokeObjectURL(url);}
+        };
+        // Read the validated, public brand routing record before rendering anything.
+        // A missing brand, unpublished brand or network problem must NEVER fall
+        // back to the sample FIELDNOTE catalog.
+        await runScript('firebase-config.js');
+        await runScript('customer-brand.js');
+        const requestedSlug=new URLSearchParams(location.search).get('brand');
+        // Installed Android PWA launches its static manifest start_url without a
+        // brand query; restore only the last successful explicit brand on this device.
+        // Explicit brand links are never overridden by local storage.
+        let slug=requestedSlug;
+        if(!slug){try{slug=localStorage.getItem('meb:last-brand')||'';}catch{slug='';}}
+        const customerConfig=await window.MEB_LOAD_CUSTOMER_BRAND(slug);
+        if(requestedSlug){try{localStorage.setItem('meb:last-brand',requestedSlug);}catch{}}
+        window.MEB_CONFIG=customerConfig;
+        const pl=document.getElementById('customer-privacy-link');
+        if(pl)pl.href='./privacy.html?brand='+encodeURIComponent(customerConfig.brand.id);
+        await import('./customer-checkout.js?asset=20261016-checkout-release-v101');
+        await runScript('shipping-utils.js');
+        await runScript('qr.js');
+        await runScript('app.js');
+      }catch(error){
+        console.error('アプリの最新データ取得に失敗:',error);
+        if(document.readyState==='loading'){
+          await new Promise(resolve=>document.addEventListener('DOMContentLoaded',resolve,{once:true}));
+        }
+        status(error?.customerMessage || 'ブランド情報を読み込めませんでした。正しいブランド専用URLを確認し、オンラインで開き直してください。');
+      }
+    })();
+  </script>
+<style id="meb-copyright-style">.meb-copyright{box-sizing:border-box;display:block;margin:16px auto 24px;padding:10px 14px;text-align:center;color:#8c98a0;font:11px/1.7 -apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;letter-spacing:.025em}@media print{.meb-copyright{display:none!important}}</style></head>
+<body>
+  <div class="app-shell" id="app">
+    <header class="site-header" id="site-header"></header>
+    <main id="view" tabindex="-1"></main>
+    <footer class="site-footer"><span>POWERED BY <strong>MY EXPO BAG</strong></span><span>v1.0.1</span><a id="customer-privacy-link" href="./privacy.html" style="color:inherit;text-decoration:underline;margin-left:12px">プライバシーポリシー</a></footer>
+  </div>
+  <div id="floating-bag" class="floating-bag-wrap" hidden></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="modal-root"></div>
+<div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
+</body>
+</html>

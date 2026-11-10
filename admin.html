@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+
+<html class="auth-pending" lang="ja">
+<head>
+<meta name="robots" content="noindex,nofollow,noarchive">
+<link href="./assets/favicon-admin.png?v=20261016-icon-1" rel="icon" sizes="64x64" type="image/png"/>
+<link href="./assets/favicon-admin.ico?v=20261016-icon-1" rel="shortcut icon"/>
+<link href="./myexpobag_admin_icon_180.png?v=20261016-icon-1" rel="apple-touch-icon" sizes="180x180"/>
+<link href="./admin.webmanifest?v=20261016-icon-1" rel="manifest"/>
+<meta content="EXPO BAG管理" name="apple-mobile-web-app-title"/>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
+<meta content="#0e1820" name="theme-color"/>
+<meta content="MY EXPO BAG 出展者用管理ページ" name="description"/>
+<title>MY EXPO BAG 管理</title>
+<!-- Customer and admin get different Home Screen labels, icons and PWA IDs. -->
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black" name="apple-mobile-web-app-status-bar-style"/>
+<script src="./firebase-config.js"></script>
+<script>
+    // When Firebase is configured, hide the admin UI until the auth guard verifies the session.
+    (()=>{const c=window.MEB_FIREBASE_CONFIG||{};if(['apiKey','authDomain','projectId','appId'].every(k=>typeof c[k]==='string'&&c[k].trim()))document.documentElement.classList.add('auth-pending')})();
+  </script>
+<style>
+    :root{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,"Noto Sans JP",sans-serif;color:#14212a;background:#f3f5f6;font-synthesis:none}
+    *{box-sizing:border-box}.auth-pending body{visibility:hidden}body{margin:0;min-height:100vh}button,a{font:inherit}button{cursor:pointer}a{color:inherit}
+    .header{background:#101d26;color:#fff;padding-top:calc(env(safe-area-inset-top,0px) + 12px);padding-right:max(18px,env(safe-area-inset-right,0px));padding-bottom:14px;padding-left:max(18px,env(safe-area-inset-left,0px));display:flex;align-items:flex-start;justify-content:space-between;gap:12px;min-height:calc(72px + env(safe-area-inset-top,0px))}
+    .brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}.brand img{width:42px;height:42px;border-radius:10px;flex:0 0 auto}.brand h1{font-size:15px;margin:0;line-height:1.25}.brand small{color:#bfd1db;display:block;margin-top:2px;font-size:11px;line-height:1.3}.brand > div{min-width:0}
+    .controls{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;justify-content:flex-end}.controls button{border:1px solid #536570;border-radius:9px;color:white;background:transparent;padding:9px 11px;font-weight:650;font-size:12px;white-space:nowrap;min-height:40px}
+    .controls button[aria-expanded="true"]{background:#24424e;border-color:#4cb5ce}
+    .wrap{width:min(720px,100%);margin:0 auto;padding:18px 16px 80px}
+    .notice{color:#704610;background:#fff3d9;border:1px solid #f0d19d;font-size:12px;border-radius:10px;padding:12px 14px;line-height:1.7;margin-bottom:14px}
+    .card{background:#fff;border:1px solid #e1e6e9;border-radius:16px;padding:18px;box-shadow:0 3px 15px rgba(13,30,42,.04);margin-bottom:14px}
+    .card h2{font-size:17px;margin:0 0 10px}.muted{color:#61737e;font-size:13px;line-height:1.75;margin:5px 0}
+    .scanner{border-radius:12px;min-height:215px;background:linear-gradient(145deg,#1a3541,#0b111b);display:flex;align-items:center;justify-content:center;flex-direction:column;color:#d9e9f1;margin:16px 0 12px;gap:14px}
+    .scanner-symbol{position:relative;width:100px;height:100px;border:5px solid #fff;border-radius:14px;clip-path:polygon(0 0,30% 0,30% 9%,70% 9%,70% 0,100% 0,100% 100%,70% 100%,70% 91%,30% 91%,30% 100%,0 100%)}
+    .scanner-symbol:after{content:"";position:absolute;top:48px;left:-8px;width:110px;height:3px;background:#22d3ee;box-shadow:0 0 15px #22d3ee}
+    .scanner strong{font-size:13px;font-weight:600}.result{margin-top:15px;border-top:1px solid #e4ebef;padding-top:17px}.result-label{font-size:12px;color:#72828e}.result-value{font-size:30px;font-weight:800;margin-top:7px;color:#9aa7ae}.empty{font-size:12px;color:#8a99a1;margin:8px 0 0}
+    .navpanel[hidden]{display:none}.setting-item{display:flex;align-items:center;justify-content:space-between;text-decoration:none;background:#f2f7fa;padding:14px;border:1px solid #d9e4e9;border-radius:11px;gap:12px;font-size:14px;font-weight:650}
+    .setting-item small{display:block;color:#637782;margin-top:5px;font-size:11px;font-weight:400}
+    .setting-item span:last-child{color:#007b9f;font-size:21px}
+    .admin-menu{display:flex;flex-direction:column;gap:3px}.menu-link,.menu-disabled,.setting-group summary{display:flex;width:100%;justify-content:space-between;align-items:center;gap:10px;text-align:left;border:0;border-radius:9px;padding:13px 14px;font-size:14px;background:#f2f7fa;color:#152b37;text-decoration:none;font-weight:650;min-height:48px}.menu-link[hidden]{display:none!important}.menu-link:hover,.setting-group summary:hover{background:#e5f1f7}.menu-disabled{color:#546771;background:#f7f9fa}.menu-disabled small{color:#7d8b94;font-size:11px;white-space:nowrap}.setting-group summary{cursor:pointer;list-style:none}.setting-group summary::-webkit-details-marker{display:none}.setting-group .expand-hint{font-weight:400;color:#5c7888;font-size:12px}.submenu{margin-left:14px;border-left:2px solid #dfebf1;padding-left:9px;margin-top:4px;display:flex;flex-direction:column;gap:3px}.submenu .menu-disabled{font-size:13px;background:#fff;border:1px solid #e5edf1}.setting-group[open] summary{background:#dfedf4}.panel-top{display:flex;justify-content:space-between;align-items:center;gap:10px}.panel-top h2{margin:0}.small-back{background:#f0f6f8;border:1px solid #d6e5ec;border-radius:8px;font-size:12px;padding:8px 10px}.select-all{display:flex;align-items:center;gap:9px;padding:12px 8px;border-bottom:1px solid #d8e2e8;font-size:13px}.select-all input,.product-row input{width:18px;height:18px;accent-color:#147794;flex:0 0 auto}.product-selection{display:flex;flex-direction:column}.product-row{display:flex;gap:10px;align-items:center;padding:11px 8px;border-bottom:1px solid #ecf0f2;font-size:13px}.product-row>span{flex:1}.product-row strong{display:block}.product-row small{display:block;color:#72828b;margin-top:3px}.preview-actions{display:grid;grid-template-columns:1fr;gap:8px}.preview-action{background:#1c3645;color:#fff;border:0;border-radius:9px;font-size:12px;padding:12px 6px}.preview-action.secondary{background:#36566a}.preview-action:disabled{opacity:.4;cursor:not-allowed}
+
+    footer{text-align:center;color:#83909a;font-size:11px;padding-top:15px}footer strong{color:#475966}
+    @media(max-width:560px){.header{align-items:flex-start}.controls{max-width:42%;gap:6px}.controls button{padding:8px 10px;font-size:11px}.brand h1{font-size:14px}.brand small{font-size:10px}}@media(max-width:400px){.brand h1{font-size:13px}.controls{max-width:45%}.controls button{padding:8px;font-size:11px;min-height:38px}.brand img{width:36px;height:36px}}
+  </style>
+<script defer="" src="./admin-refresh.js?asset=20261015-sku-stock-watch"></script>
+<style id="meb-copyright-style">.meb-copyright{box-sizing:border-box;display:block;margin:16px auto 24px;padding:10px 14px;text-align:center;color:#8c98a0;font:11px/1.7 -apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;letter-spacing:.025em}@media print{.meb-copyright{display:none!important}}</style></head>
+<body>
+<header class="header">
+<div class="brand">
+<img alt="管理ページアイコン" src="./myexpobag_admin_icon.png"/>
+<div><h1>MY EXPO BAG 管理</h1><small id="current-brand-name">出展者・販売スタッフ用</small></div>
+</div>
+<div class="controls">
+<button aria-controls="menu-panel" aria-expanded="false" id="menu-btn" type="button">☰ メニュー</button>
+</div>
+</header>
+<main class="wrap">
+
+<section aria-label="管理メニュー" class="card navpanel" hidden="" id="menu-panel">
+<h2>管理メニュー</h2>
+<div class="admin-menu">
+<a class="menu-link" href="./products.html"><span>商品・カテゴリ登録</span><span aria-hidden="true">›</span></a>
+<a class="menu-link" href="./customer-data.html"><span>顧客CSVデータダウンロード</span><span aria-hidden="true">›</span></a>
+<a class="menu-link" href="./pop-download.html"><span>POP・お客様QRダウンロード</span><span aria-hidden="true">›</span></a>
+<a class="menu-link" href="./assets/MY_EXPO_BAG_manual.pdf" download="MY EXPO BAG 管理ページマニュアル.pdf"><span>取扱説明書（PDF）をダウンロード</span><span aria-hidden="true">›</span></a>
+<button aria-controls="product-qr-panel" aria-expanded="false" class="menu-link" id="products-qr-menu" type="button"><span>商品QRダウンロード</span><span aria-hidden="true">›</span></button>
+<details class="setting-group">
+<summary>設定 <span class="expand-hint">開く <span aria-hidden="true">⌄</span></span></summary>
+<div class="submenu">
+<a class="menu-link" href="./settings.html"><span>ブランドカラー・バナー・アプリ割引・ノベルティ</span><span aria-hidden="true">›</span></a>
+<a class="menu-link" href="./shipping-settings.html"><span>予約配送料設定（全国一律・都道府県別・CSV）</span><span aria-hidden="true">›</span></a>
+<a class="menu-link" href="./event-settings.html"><span>展示会名の変更（既存機能）</span><span aria-hidden="true">›</span></a>
+</div>
+</details>
+<a class="menu-link" href="./account.html" id="account-link"><span>アカウント情報</span><span aria-hidden="true">›</span></a>
+<a class="menu-link" href="./index.html" id="customer-page-link" rel="noopener noreferrer" target="_blank"><span>お客様ページを見る</span><span aria-hidden="true">↗</span></a>
+<div id="customer-browser-help" hidden>
+<p class="muted">ホーム画面のアプリからSafari等が開かない場合は、URLをコピーしてブラウザのアドレス欄に貼り付けてください。</p>
+<button class="menu-link" id="customer-url-copy" type="button"><span>お客様ページのURLをコピー</span><span aria-hidden="true">⧉</span></button>
+<p class="muted" id="customer-url-copy-status" role="status"></p>
+</div>
+<button class="menu-link" hidden="" id="logout-btn" type="button"><span>ログアウト</span><span aria-hidden="true">↗</span></button>
+</div>
+</section>
+<section aria-label="商品QRダウンロード" class="card navpanel" hidden="" id="product-qr-panel">
+<div class="panel-top"><h2>商品QRダウンロード</h2></div>
+
+<label class="select-all"><input id="product-check-all" type="checkbox"/> <strong>ALL｜すべて選択</strong></label>
+<div class="product-selection" id="products-selection-list"></div>
+<p aria-live="polite" class="muted" id="product-selected-count">選択数：0商品</p>
+<div class="preview-actions">
+<button class="preview-action" disabled="" id="preview-pricecards" type="button">プレビュー</button>
+</div>
+<button class="preview-action" disabled="" id="download-product-qr" style="width:100%;margin-top:10px;background:#146076" type="button">選択した商品QRをZIPで保存</button>
+<p class="muted" id="product-qr-export-status" role="status"></p>
+
+</section>
+<section aria-label="QR読み取り" class="card">
+<h2>購入QR読み取り</h2>
+
+<div aria-label="購入QRの読み取り" class="scanner">
+<div aria-hidden="true" class="scanner-symbol"></div>
+<a href="./scan.html" style="color:white;font-weight:750;background:#146076;text-decoration:none;padding:12px 18px;border-radius:10px">購入QRを読み取る →</a>
+<small>認証済みスタッフが読み取ると在庫が更新されます</small>
+</div>
+<div class="result"><div class="result-label">お支払い金額</div><div class="result-value">— 円</div></div>
+</section>
+<footer>POWERED BY <strong>MY EXPO BAG</strong>　v1.0.1</footer>
+</main>
+<script>
+    (()=>{
+      const menu=document.getElementById('menu-panel');
+      const btnMenu=document.getElementById('menu-btn');
+      const qrPanel=document.getElementById('product-qr-panel');
+      const btnQr=document.getElementById('products-qr-menu');
+      const all=document.getElementById('product-check-all');
+      const list=document.getElementById('products-selection-list');
+      const count=document.getElementById('product-selected-count');
+      const previewBtn=document.getElementById('preview-pricecards');
+      let data=[]; // Authenticated brand product list is injected by admin-product-qr.js.
+      const yen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
+      const currentSelected=()=>[...list.querySelectorAll('input[data-id]:checked')].map(el=>el.dataset.id);
+      const sync=()=>{
+        const n=currentSelected().length;
+        count.textContent=`選択数：${n}商品`;
+        all.checked=data.length>0&&n===data.length;
+        all.indeterminate=n>0&&n<data.length;
+        previewBtn.disabled=n===0;
+        document.getElementById('download-product-qr').disabled=n===0;
+      };
+      window.MEB_SET_PRODUCT_QR_LIST=(items)=>{
+        data=Array.isArray(items)?items:[];
+        list.replaceChildren();
+        data.forEach(p=>{
+          const row=document.createElement('label');row.className='product-row';
+          const input=document.createElement('input');input.type='checkbox';input.dataset.id=p.id;
+          const info=document.createElement('span'),title=document.createElement('strong');title.textContent=p.name;
+          const sub=document.createElement('small');const price=Number.isFinite(p.eventPrice)&&p.eventPrice<p.price?p.eventPrice:p.price;
+          sub.textContent=`ID: ${p.id} ／ ${yen(price)} ／ ${p.published?'公開済み':'未公開（商品公開が必要）'}`;
+          info.append(title,sub);row.append(input,info);list.append(row);input.addEventListener('change',sync);
+        });
+        if(!data.length){const empty=document.createElement('p');empty.className='muted';empty.textContent='登録された商品がありません。「商品・カテゴリ登録」で商品を登録してください。';list.append(empty);}
+        all.disabled=!data.length;
+        sync();
+      };
+      window.MEB_PRODUCT_QR_ERROR=(reason)=>{list.replaceChildren();const msg=document.createElement('p');msg.className='muted';msg.textContent='商品情報の取得に失敗しました：'+reason;list.append(msg);};
+      const loading=document.createElement('p');loading.className='muted';loading.textContent='登録済みの商品を読み込み中…';list.append(loading);
+      all.addEventListener('change',()=>{list.querySelectorAll('input[data-id]').forEach(el=>el.checked=all.checked);sync()});
+      // Product QR uses the same "管理ページ" return navigation as other admin sections.
+      // This feature lives inside admin.html, so change the existing header button
+      // temporarily rather than create a separate page or alter export functionality.
+      const setProductQrMode=(active)=>{
+        qrPanel.hidden=!active;
+        btnMenu.textContent=active?'← 管理ページ':'☰ メニュー';
+        btnMenu.setAttribute('aria-controls',active?'product-qr-panel':'menu-panel');
+        btnMenu.setAttribute('aria-expanded',String(active));
+        btnQr.setAttribute('aria-expanded',String(active));
+      };
+      btnMenu.addEventListener('click',()=>{
+        if(!qrPanel.hidden){
+          menu.hidden=true;
+          setProductQrMode(false);
+          window.scrollTo({top:0,behavior:'smooth'});
+          return;
+        }
+        const opened=menu.hidden;
+        menu.hidden=!opened;
+        btnMenu.setAttribute('aria-expanded',String(opened));
+      });
+      btnQr.addEventListener('click',()=>{
+        menu.hidden=true;
+        setProductQrMode(true);
+        qrPanel.scrollIntoView({block:'start',behavior:'smooth'});
+      });
+
+      previewBtn.addEventListener('click',()=>{
+        const ids=currentSelected();if(!ids.length)return;
+        const url=new URL('./pricecards.html',location.href);
+        url.searchParams.set('ids',ids.join(','));url.searchParams.set('style','accent');
+        // The preview already has its own 管理ページ return link.
+        location.assign(url.href);
+      });
+      sync();
+      // Standalone iOS apps cannot reliably force another browser to open.
+      // Keep the genuine external/new-context link above and provide a safe
+      // copy-to-Safari fallback only when launched from the Home Screen.
+      const standalone=window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone===true;
+      if(standalone){
+        document.getElementById('customer-browser-help').hidden=false;
+        document.getElementById('customer-url-copy').addEventListener('click',async()=>{
+          const href=document.getElementById('customer-page-link').href;
+          const status=document.getElementById('customer-url-copy-status');
+          try{await navigator.clipboard.writeText(href);status.textContent='URLをコピーしました。Safari等に貼り付けて開いてください。';}
+          catch{window.prompt('このURLをコピーしてSafari等で開いてください。',href);status.textContent='URLを表示しました。';}
+        });
+      }
+      // The customer link is set from the authenticated brand by admin-auth.js,
+      // never from a visitor-controlled URL parameter.
+    })();
+  </script>
+<script src="./qr.js"></script>
+<script defer="" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="./admin-auth.js" type="module"></script>
+<script src="./admin-product-qr.js?asset=20261016-real-product-qr-v109" type="module"></script>
+<div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
+</body>
+</html>

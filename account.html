@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta name="robots" content="noindex,nofollow,noarchive">
+<link href="./assets/favicon-admin.png?v=20261016-icon-1" rel="icon" sizes="64x64" type="image/png"/>
+<link href="./assets/favicon-admin.ico?v=20261016-icon-1" rel="shortcut icon"/>
+<link href="./myexpobag_admin_icon_180.png?v=20261016-icon-1" rel="apple-touch-icon" sizes="180x180"/>
+<link href="./admin.webmanifest?v=20261016-icon-1" rel="manifest"/>
+<meta content="EXPO BAG管理" name="apple-mobile-web-app-title"/>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<meta content="#101d26" name="theme-color"/>
+<meta content="noindex,nofollow" name="robots"/>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black" name="apple-mobile-web-app-status-bar-style"/>
+<title>アカウント情報 | MY EXPO BAG 管理</title>
+<style>
+    :root{font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP","Helvetica Neue",Arial,sans-serif;color:#19303c;background:#f3f5f6;font-synthesis:none}
+    *{box-sizing:border-box}body{margin:0;min-height:100dvh}button,input{font:inherit}button{cursor:pointer}a{color:inherit}
+    .top{background:#101d26;color:#fff;padding:calc(env(safe-area-inset-top,0px) + 13px) max(18px,env(safe-area-inset-right,0px)) 15px max(18px,env(safe-area-inset-left,0px));display:flex;align-items:center;gap:16px}
+    .top a{font-size:13px;text-decoration:none;color:#dce9f0;background:#213a47;border:1px solid #42606d;border-radius:9px;padding:10px 12px;flex:none}.top strong{font-size:16px}
+    .wrap{width:min(620px,100%);margin:auto;padding:20px 16px calc(env(safe-area-inset-bottom,0px) + 46px)}.card{background:#fff;border-radius:16px;border:1px solid #e1e8ec;box-shadow:0 3px 16px #17293609;padding:20px;margin-bottom:14px}
+    h1{font-size:20px;margin:0 0 5px}h2{font-size:16px;margin:0 0 12px}.help{color:#667986;font-size:12px;line-height:1.75;margin:5px 0 12px}
+    .avatar-zone{display:flex;flex-direction:column;align-items:center;gap:10px;padding:11px 0 19px;border-bottom:1px solid #e8edef;margin-bottom:18px}
+    .avatar{width:102px;height:102px;border-radius:50%;background:#e5e9ed;border:3px solid #f4f6f8;box-shadow:0 0 0 1px #d7e0e5;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#9ba8b1}
+    .avatar svg{width:67px;height:67px;fill:currentColor}.avatar img{width:100%;height:100%;object-fit:contain}
+    .avatar-actions{display:flex;gap:9px;flex-wrap:wrap;justify-content:center}.upload-button,.light-button{border:1px solid #b8ceda;background:#f4f8fa;color:#1b526b;font-weight:650;border-radius:9px;font-size:12px;padding:10px 13px;cursor:pointer}.upload-button{position:relative;display:inline-flex;align-items:center;justify-content:center;min-height:44px;overflow:hidden}.upload-button input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:100px}.light-button{background:#fff}
+    .field{margin-bottom:17px}.field label{display:block;font-size:12px;font-weight:750;margin-bottom:8px}.field input{width:100%;border:1px solid #cbd8df;border-radius:9px;padding:12px 13px;min-height:46px;color:#1b303b;background:white;font-size:16px}
+    .field input[readonly]{background:#f4f6f7;color:#637680}.field input:focus{outline:none;border-color:#1087a4;box-shadow:0 0 0 3px #178fac1d}
+    .primary{background:#142e3c;border:0;border-radius:9px;color:white;font-weight:750;padding:13px 18px;min-height:47px;width:100%}.primary:disabled{opacity:.5;cursor:not-allowed}
+    .change{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid #d6e3e8;background:#f4f8fa;color:#173c50;text-align:left;border-radius:10px;padding:15px 13px;font-weight:700;font-size:14px;margin:9px 0}
+    .change-panel{border:1px solid #e0e8ec;border-radius:10px;padding:15px;margin-bottom:12px}.change-panel[hidden]{display:none}
+    .status{border-radius:9px;background:#f3f7f9;color:#4c6673;padding:11px 13px;font-size:12px;line-height:1.65;margin:13px 0 0}
+    .status.ok{background:#ebf8ef;color:#196341}.status.error{background:#fff0f0;color:#a12626}.status:empty{display:none}
+    .note{font-size:11px;color:#71848d;line-height:1.7}.loading{text-align:center;color:#627a86;font-size:13px;padding:80px 16px}
+    footer{text-align:center;color:#82919a;font-size:11px;padding-top:11px}
+    @media(max-width:390px){.top strong{font-size:14px}.card{padding:16px}}
+  </style>
+<style id="meb-copyright-style">.meb-copyright{box-sizing:border-box;display:block;margin:16px auto 24px;padding:10px 14px;text-align:center;color:#8c98a0;font:11px/1.7 -apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;letter-spacing:.025em}@media print{.meb-copyright{display:none!important}}</style><link rel="stylesheet" href="./admin-navigation.css?v=20261016-v114"/>
+</head>
+<body>
+<header class="top meb-admin-page-header"><strong class="meb-admin-page-title">アカウント情報</strong><a class="meb-admin-back" href="./admin.html">← 管理ページ</a></header>
+<p class="loading" id="loading" role="status">アカウントを確認しています…</p>
+<main class="wrap" hidden="" id="account-shell">
+<section class="card">
+<h1>アカウント情報</h1><p class="help">ブランド名・登録情報の確認と変更ができます。</p>
+<div class="avatar-zone">
+<div aria-label="ブランドアイコン" class="avatar" id="brand-avatar" role="img">
+<svg aria-hidden="true" viewbox="0 0 64 64"><circle cx="32" cy="23" r="13"></circle><path d="M7 60c0-13.5 11.2-23 25-23s25 9.5 25 23z"></path></svg>
+</div>
+<strong style="font-size:13px">ブランドアイコン</strong>
+<div class="avatar-actions">
+<label class="upload-button">画像を登録・変更<input accept="image/*" aria-label="ブランドアイコンの画像を選択" id="brand-icon-file" type="file"/></label>
+<button class="light-button" id="remove-icon" type="button">画像を解除</button>
+</div>
+<p class="note" style="text-align:center">推奨：JPG・PNG・WebP／15MB以下</p>
+</div>
+<form id="brand-form">
+<div class="field"><label for="display-name">ブランド名（表示用・変更可能）</label><input autocomplete="organization" id="display-name" maxlength="100" placeholder="日本語・英語どちらでも入力できます" required="" type="text"/></div>
+<div class="field">
+<label style="display:flex;align-items:center;gap:8px"><input id="operator-same" style="width:auto;min-height:auto" type="checkbox"/>運営者名はブランド名と同じ</label>
+<label for="operator-name">運営会社・運営者名（必須）</label>
+<input autocomplete="organization" id="operator-name" maxlength="120" placeholder="法人名または個人事業の運営者名" required="" type="text"/>
+</div>
+
+<div class="field"><label for="brand-slug">アカウントのブランド名（URL識別子・変更不可）</label><input id="brand-slug" readonly="" type="text"/></div>
+<div class="field"><label for="account-email">メールアドレス</label><input id="account-email" readonly="" type="email"/></div>
+<div class="field"><label for="account-password">パスワード</label><input id="account-password" readonly="" type="text" value="********"/></div>
+<button class="primary" disabled="" id="save-brand" type="submit">ブランド情報を保存</button>
+<p aria-live="polite" class="status" id="brand-status" role="status"></p>
+</form>
+</section>
+<section class="card">
+<h2>ログイン情報の変更</h2>
+<button aria-controls="email-panel" aria-expanded="false" class="change" id="toggle-email" type="button">メールアドレスを変更 <span aria-hidden="true">›</span></button>
+<div class="change-panel" hidden="" id="email-panel">
+<form id="email-form">
+<div class="field"><label for="new-email">新しいメールアドレス</label><input autocomplete="email" id="new-email" maxlength="254" required="" type="email"/></div>
+<div class="field"><label for="email-current-password">現在のパスワード（本人確認）</label><input autocomplete="current-password" id="email-current-password" required="" type="password"/></div>
+<button class="primary" id="save-email" type="submit">確認メールを送る</button>
+<p class="help">新しいメールアドレスに確認リンクを送ります。リンクを開くと変更が確定します。</p>
+<p aria-live="polite" class="status" id="email-status" role="status"></p>
+</form>
+</div>
+<button aria-controls="password-panel" aria-expanded="false" class="change" id="toggle-password" type="button">パスワードを変更 <span aria-hidden="true">›</span></button>
+<div class="change-panel" hidden="" id="password-panel">
+<form id="password-form">
+<div class="field"><label for="password-current">現在のパスワード（本人確認）</label><input autocomplete="current-password" id="password-current" required="" type="password"/></div>
+<div class="field"><label for="new-password">新しいパスワード</label><input autocomplete="new-password" id="new-password" minlength="8" required="" type="password"/></div>
+<div class="field"><label for="confirm-password">新しいパスワード（確認）</label><input autocomplete="new-password" id="confirm-password" required="" type="password"/></div>
+<p class="help">8文字以上・英大文字・英小文字・数字・記号（@ &amp; - _ のいずれか）が必要です。</p>
+<button class="primary" id="save-password" type="submit">パスワードを変更</button>
+<p aria-live="polite" class="status" id="password-status" role="status"></p>
+</form>
+</div>
+</section>
+<footer>MY EXPO BAG · v1.0.1</footer>
+</main>
+<script src="./firebase-config.js"></script>
+<script src="./account.js?icon-fix=20261015" type="module"></script>
+<div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
+</body>
+</html>

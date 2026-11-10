@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+
+<html class="auth-pending" lang="ja">
+<head>
+<meta name="robots" content="noindex,nofollow,noarchive">
+<link href="./assets/favicon-admin.png?v=20261016-icon-1" rel="icon" sizes="64x64" type="image/png"/>
+<link href="./assets/favicon-admin.ico?v=20261016-icon-1" rel="shortcut icon"/>
+<link href="./myexpobag_admin_icon_180.png?v=20261016-icon-1" rel="apple-touch-icon" sizes="180x180"/>
+<link href="./admin.webmanifest?v=20261016-icon-1" rel="manifest"/>
+<meta content="EXPO BAG管理" name="apple-mobile-web-app-title"/>
+<meta charset="utf-8"/><meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<meta content="#101d26" name="theme-color"/><meta content="black" name="apple-mobile-web-app-status-bar-style"/>
+<title>商品・カテゴリ登録｜MY EXPO BAG</title>
+<script src="./firebase-config.js"></script>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;background:#f2f5f7;color:#142734;font-synthesis:none}*{box-sizing:border-box}body{margin:0;min-height:100vh}.auth-pending #shell{visibility:hidden}header{background:#101d26;color:#fff;padding:calc(env(safe-area-inset-top,0px) + 12px) max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px))}header .top{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:900px;margin:auto}h1{font-size:19px;margin:0}h2{font-size:17px;margin:0 0 12px}p{line-height:1.65}.muted{color:#637580;font-size:12px}.back{color:white;text-decoration:none;font-size:13px;border:1px solid #728691;padding:10px 12px;border-radius:9px;white-space:nowrap}main{max-width:900px;padding:18px 14px 50px;margin:auto}.card{background:white;border:1px solid #dce5ea;border-radius:15px;padding:19px;margin:0 0 16px;box-shadow:0 4px 15px #122b3610}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.field{display:flex;flex-direction:column;gap:5px;margin:0 0 12px;min-width:0}.field label{font-size:12px;font-weight:650}.field input,.field select,.field textarea{width:100%;border:1px solid #bbcbd5;border-radius:9px;background:#fff;color:#172c39;padding:12px;font:inherit;font-size:14px}.field textarea{min-height:72px;resize:vertical}button{font:inherit;cursor:pointer;border-radius:9px;padding:11px 15px;border:1px solid #c0d2db;background:#f1f7fa;color:#163c4d;font-size:13px;font-weight:650}button.primary{background:#163847;color:white;border-color:#163847}button.danger{color:#a23f39;border-color:#ebc9c6;background:#fff}button:disabled{opacity:.5;cursor:not-allowed}.pill{font-size:11px;border:1px solid #d8e5ea;border-radius:99px;padding:6px 10px;display:inline-block;background:#f5f9fa}.status{padding:12px;border-radius:9px;background:#e9f7ed;color:#205b37;font-size:13px;white-space:pre-wrap;line-height:1.6}.status.error{background:#fff0ed;color:#9b302b}.status[hidden],section[hidden],div[hidden]{display:none!important}.category-list{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.cat{display:flex;align-items:center;gap:6px;background:#f3f7f9;border-radius:99px;padding:4px 5px 4px 12px;font-size:13px}.cat button{padding:3px 7px;border-radius:99px;background:#fff;min-width:25px}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}.product-list{border-top:1px solid #e6edef}.product{display:flex;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid #e6edef}.product-info{flex:1;min-width:0}.product-name{font-weight:700;font-size:14px;word-break:break-word}.product-meta{font-size:12px;color:#647984;margin-top:4px;line-height:1.5}.product button{padding:8px 11px}.photo-preview[hidden]{display:none!important}.photo-preview{width:100px;height:100px;object-fit:contain;background:#f1f5f7;border:1px solid #dbe4e9;border-radius:11px;display:block}.image-line{display:flex;align-items:center;gap:15px;flex-wrap:wrap}.bulk-list{padding:12px;background:#f6f9fa;border:1px solid #dce7ed;border-radius:9px;font-size:12px;line-height:1.8;max-height:180px;overflow:auto}.bulk-list[hidden]{display:none!important}.product-photo-small{width:46px;height:46px;border:1px solid #dce7ed;border-radius:7px;object-fit:contain;background:#f7f9fa}.variant-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:end;margin:0 0 8px}.variant-row .field{margin:0}.subcode-input{display:flex;align-items:center;border:1px solid #bbcbd5;border-radius:9px;overflow:hidden;background:#fff;min-width:0}.subcode-input .subcode-prefix{background:#eaf1f4;color:#315364;padding:12px 8px;font-size:12px;white-space:nowrap;max-width:45%;overflow:hidden;text-overflow:ellipsis}.subcode-input input.variant-code{border:0;border-radius:0;min-width:0;flex:1;width:100%;padding:12px 8px}.variant-row button{padding:11px 12px}.variant-block{border:1px solid #dce5ea;background:#f8fafb;padding:12px;border-radius:10px;margin-bottom:15px}@media(max-width:520px){.variant-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:5px}.variant-row .field input{padding:9px;font-size:12px}.variant-row button{padding:8px}}.image-note{font-size:12px;color:#56717e;line-height:1.7}.image-label{font-size:12px;font-weight:700;margin-bottom:8px;display:block}.checkline{display:flex;align-items:center;gap:8px;font-size:13px;margin:9px 0 15px}.checkline input{width:18px;height:18px;accent-color:#14516b}.tabbar{display:flex;gap:8px;margin-bottom:15px}.tabbar button.active{background:#163847;color:#fff}.hint{font-size:12px;color:#577182;line-height:1.65;margin:7px 0 15px}.preview{max-height:250px;overflow:auto;font-size:12px;border:1px solid #e2e9ed;border-radius:8px;padding:10px;line-height:1.8;background:#f8fafb}.notice{padding:12px 14px;background:#fff7e8;border:1px solid #ead7b0;border-radius:10px;font-size:12px;line-height:1.7;margin-bottom:15px}footer{text-align:center;font-size:11px;color:#81919a;padding:22px}@media(max-width:520px){.cols{grid-template-columns:1fr}h1{font-size:16px}.card{padding:15px}.product{flex-wrap:wrap}.product button{padding:8px 10px}}
+.variant-preorder-label{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:650;color:#244e61;padding:5px 8px;background:#edf6fa;border-radius:7px;margin:2px 0 4px;cursor:pointer}.variant-preorder-label input{width:16px;height:16px;accent-color:#14516b;margin:0}.variant-preorder-label:has(input:disabled){opacity:.55}</style>
+<script defer="" src="./admin-refresh.js?asset=20261015-sku-stock-watch"></script>
+<style id="meb-copyright-style">.meb-copyright{box-sizing:border-box;display:block;margin:16px auto 24px;padding:10px 14px;text-align:center;color:#8c98a0;font:11px/1.7 -apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;letter-spacing:.025em}@media print{.meb-copyright{display:none!important}}</style><link rel="stylesheet" href="./admin-navigation.css?v=20261016-v114"/>
+</head>
+<body>
+<header class="meb-admin-nav-host"><div class="top meb-admin-page-header"><div class="meb-admin-page-title"><h1>商品・カテゴリ登録</h1><div id="brand-label" style="font-size:11px;color:#b7cbd6;margin-top:4px">MY EXPO BAG　v1.0.1</div></div><a class="back meb-admin-back" href="./admin.html">← 管理ページ</a></div></header>
+<main>
+<div class="notice" id="loading">ログインとブランド情報を確認しています…</div>
+<div hidden="" id="shell">
+<section aria-label="公開操作" class="card"><div class="toolbar"><h2>お客様ページへの反映</h2><span class="pill">ブランド別</span></div>
+<div class="row"><button class="primary" id="publish-catalog" type="button">お客様ページに反映</button><a href="./index.html" id="public-customer-link" rel="noopener noreferrer" target="_blank">お客様ページを別タブで確認 ↗</a></div>
+<p aria-live="polite" class="status" hidden="" id="publish-status" role="status"></p></section>
+<p aria-live="polite" class="status" hidden="" id="status" role="status"></p>
+<section class="card"><div class="toolbar"><h2>カテゴリ設定</h2><span class="pill" id="category-count">0件</span></div>
+<div class="category-list" id="categories"></div>
+<form class="row" id="category-form"><input aria-label="追加するカテゴリ" id="new-category" maxlength="40" placeholder="例：ランタン、バッグ、雑貨" required="" style="flex:1;min-width:180px;padding:11px;border-radius:9px;border:1px solid #bbcbd5;font:inherit;font-size:14px"/><button class="primary" type="submit">カテゴリを追加</button></form>
+<p class="muted">使用中のカテゴリは削除できません。商品を別カテゴリに変更してから削除できます。</p></section>
+<section class="card"><div class="toolbar"><h2>商品登録・編集</h2><span class="pill">1商品IDにつき画像1枚</span></div>
+<form id="product-form">
+<div class="cols"><div class="field"><label for="product-id">商品ID（必須）</label><input autocomplete="off" id="product-id" maxlength="40" pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,39}" placeholder="LT-001" required=""/></div><div class="field"><label for="product-name">商品名（必須）</label><input id="product-name" maxlength="100" placeholder="LEDランタン" required=""/></div></div>
+<div class="field"><label for="product-category">カテゴリ（必須）</label><input id="product-category" list="category-options" maxlength="40" placeholder="登録済みから選択・新規入力も可" required=""/><datalist id="category-options"></datalist></div>
+<div class="cols"><div class="field"><label for="product-price">通常価格（税込・円）（必須）</label><input id="product-price" max="100000000" min="0" placeholder="4800" required="" step="1" type="number"/></div><div class="field"><label for="product-event-price">展示会限定価格（税込・円・任意）</label><input id="product-event-price" max="100000000" min="0" placeholder="4200" step="1" type="number"/></div></div>
+<div class="variant-block"><div class="toolbar"><strong>バリエーション（任意）</strong><span class="muted">カラー・サイズなど／画像は商品共通／行ごとに予約チェック可</span></div>
+<div id="variant-rows"></div><button id="add-variant" type="button">＋ バリエーションを追加</button>
+<p class="hint" id="variant-entry-hint" hidden>「＋ バリエーションを追加」を押すと入力欄が1行表示されます。使わない場合は追加不要です。サブコードは <code>BK</code> のような末尾だけを入力してください。<code>商品ID_BK</code> を自動生成します。</p></div>
+<div class="cols"><div class="field"><label for="product-jan">JANコード（任意）</label><input id="product-jan" inputmode="numeric" maxlength="14" placeholder="例：4901234567894"/></div><div class="field"><label for="product-stock">在庫数（バリエーションなしは販売上限／ありは参考合計）</label><input id="product-stock" max="100000000" min="0" placeholder="カラーごとの在庫を入力すると参考合計を表示" step="1" type="number"/><p aria-live="polite" class="hint" id="product-stock-hint">バリエーションなしの商品は手入力できます。空欄は上限なしです。</p></div></div>
+<label class="checkline"><input id="product-preorder" type="checkbox"/> 受注予約の商品にする</label>
+<div class="variant-block" hidden="" id="release-settings"><div class="toolbar"><strong>発売予定（予約商品・予約バリエーションで必須）</strong></div>
+<div class="cols"><div class="field"><label for="release-month">発売予定月（予約時必須）</label><select id="release-month"><option value="">月を選択</option></select></div>
+<div class="field"><label for="release-period">発売予定時期（予約時必須）</label><select id="release-period"><option value="">時期を選択</option><option value="上旬">上旬</option><option value="中旬">中旬</option><option value="下旬">下旬</option></select></div></div>
+<p class="hint">例：10月中旬予定。バリエーションの一部だけを受注予約する場合にも共通の発売予定を入力してください。</p></div>
+<div class="variant-block"><div class="toolbar"><strong>組合せ商品（任意）</strong><span class="muted" id="combo-count">0 / 3件</span></div>
+<div id="combo-rows"></div><button id="add-combo" type="button">＋ 組合せ商品を追加</button>
+<p class="hint" id="combo-entry-hint" hidden>最大3件まで設定できます。相手の商品IDと、組合せ購入時の割引額（円）を入力します。</p></div>
+<div class="field"><label for="product-image">商品画像（任意・商品IDごとに1枚）</label>
+<div class="image-line"><img alt="商品画像プレビュー" class="photo-preview" hidden="" id="product-image-preview"/><div><input accept="image/*,.heic,.heif" id="product-image" style="max-width:310px" type="file"/><div class="image-note" id="product-image-hint">推奨：JPG・PNG・WebP／各15MB以下、ZIP最大50MB</div></div></div>
+</div>
+<label class="checkline"><input id="product-novelty" type="checkbox"/> この商品をノベルティ対象商品にする（初期設定：対象外）</label>
+<p class="hint">対象商品を複数選ぶ場合は「設定 → ⑤ ノベルティ」でも一覧からチェックできます。ノベルティの配布条件と名称は設定画面で登録してください。</p>
+<label class="checkline"><input checked="" id="product-active" type="checkbox"/> この商品をお客様ページに表示する（公開時に反映）</label>
+<div class="row"><button class="primary" id="product-save" type="submit">商品を保存</button><button id="product-clear" type="button">入力をクリア</button><span class="muted" id="edit-note">新規登録</span></div>
+</form></section>
+<section class="card"><div class="toolbar"><h2>登録済み商品 <span id="product-count">0</span>件</h2><button id="refresh-products" type="button">一覧を更新</button></div><div class="product-list" id="product-list"><p class="muted">商品はまだ登録されていません。</p></div></section>
+<section class="card"><h2>CSV（.csv）商品一括登録</h2>
+<div class="row" style="margin-bottom:12px"><button id="download-csv" type="button">CSVテンプレートをDL</button><button id="sample-csv" type="button">CSV入力例をDL</button><button id="export-csv" type="button">登録商品をCSVでDL</button></div>
+<p class="hint">CSVの見出しに「(必須)」「(任意)」「(予約時必須)」などを表示します。<strong>入力欄の色分けはCSVに保存されない</strong>ため、区分別の入力例は取扱説明書で確認してください。ノベルティ対象は 1＝対象、0／空欄＝対象外です。</p>
+<div class="field"><label for="import-file">一括登録ファイル（CSV .csv のみ）</label><input accept=".csv,text/csv" id="import-file" type="file"/></div>
+<div class="preview" hidden="" id="import-preview"></div>
+<div class="row" style="margin-top:12px"><button class="primary" disabled="" id="import-save" type="button">確認した商品を登録</button><span class="muted">1回300商品まで</span></div>
+<div style="border-top:1px solid #e1e8ed;margin-top:22px;padding-top:18px">
+<h2>画像一括登録</h2>
+<p class="hint">推奨：JPG・PNG・WebP／各15MB以下、ZIP最大50MB</p>
+<div class="field"><label for="images-import">画像ZIPファイル（1回50画像まで）</label><input accept=".zip,application/zip,application/x-zip-compressed" id="images-import" type="file"/></div>
+<p class="image-note">推奨：JPG・PNG・WebP／画像1枚15MB以下・ZIP最大50MB</p>
+<div aria-live="polite" class="bulk-list" hidden="" id="images-preview"></div>
+<div class="row" style="margin-top:12px"><button class="primary" disabled="" id="images-save" type="button">確認した画像を一括登録</button><span class="muted" id="images-count"></span></div>
+</div>
+</section>
+</div>
+<footer>POWERED BY MY EXPO BAG　v1.0.1</footer>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script>
+// Fail-safe: never leave the entire page blank when an external module or
+// Firebase authentication cannot initialize. Form stays hidden until verified.
+(()=>{
+  const pending=()=>document.documentElement.classList.contains('auth-pending');
+  const report=(message)=>{
+    if(!pending())return;
+    const el=document.getElementById('loading');
+    if(el){el.hidden=false;el.textContent=message;}
+    document.documentElement.classList.remove('auth-pending');
+  };
+  window.MEB_PRODUCTS_STARTUP_ERROR=()=>report('商品登録画面を読み込めませんでした。ブラウザの更新をお試しください。解消しない場合は、この画面を撮影してお知らせください。');
+  window.addEventListener('error',event=>{
+    if(event.target instanceof HTMLScriptElement && /(?:products\.js|firebase-config\.js)/.test(event.target.src||'')){
+      report('読み込みに必要なJavaScriptを取得できませんでした。通信状況と公開ファイルをご確認ください。');
+    }else if(event.error && /products\.js/.test(event.filename||'')){
+      console.error('MY EXPO BAG product startup error:',event.error);
+      report('商品登録画面の処理でエラーが発生しました。ページを再読み込みしてお試しください。');
+    }
+  },true);
+  window.addEventListener('unhandledrejection',event=>{
+    if(!pending())return;
+    console.error('MY EXPO BAG product initialization error:',event.reason);
+    report('商品登録画面の初期化に失敗しました。通信・認証設定をご確認ください。');
+  });
+  window.setTimeout(()=>{
+    report('ログイン確認が完了しません。通信状態をご確認のうえ、画面を再読み込みしてください。');
+  },15000);
+})();
+</script>
+<script onerror="window.MEB_PRODUCTS_STARTUP_ERROR?.()" src="./products.js?asset=20261019-expand-fields-02" type="module"></script>
+<div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
+</body></html>

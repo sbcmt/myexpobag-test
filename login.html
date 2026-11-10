@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta name="robots" content="noindex,nofollow,noarchive">
+<link rel="icon" type="image/png" sizes="64x64" href="./assets/favicon-admin.png?v=20261016-icon-1">
+<link rel="shortcut icon" href="./assets/favicon-admin.ico?v=20261016-icon-1">
+<link rel="apple-touch-icon" sizes="180x180" href="./myexpobag_admin_icon_180.png?v=20261016-icon-1">
+<link rel="manifest" href="./admin.webmanifest?v=20261016-icon-1">
+<meta name="apple-mobile-web-app-title" content="EXPO BAG管理">
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101d26">
+  <meta name="description" content="MY EXPO BAG 管理ページ ログイン">
+  <meta name="robots" content="noindex,nofollow">
+  <title>ログイン | MY EXPO BAG 管理</title>
+  
+  
+  
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <style>
+    :root{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,"Noto Sans JP",sans-serif;color:#152832;font-synthesis:none}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;min-height:100dvh;background:linear-gradient(160deg,#132a36 0%,#0d1720 60%,#0c121a 100%);padding:calc(env(safe-area-inset-top,0px) + 24px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 28px) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;overflow-x:hidden}
+    button,input{font:inherit}.shell{width:min(100%,410px);flex:0 1 auto;min-width:0}.identity{display:flex;align-items:center;justify-content:center;gap:15px;color:white;margin:0 0 24px}.identity img{width:70px;height:70px;border-radius:17px;object-fit:cover}.identity h1{font-size:21px;line-height:1.35;letter-spacing:.015em;margin:0}.identity p{font-size:12px;color:#b5c8d2;margin:5px 0 0}
+    .card{padding:30px 26px 25px;background:#fff;border-radius:22px;box-shadow:0 22px 70px #040c1466}.tag{color:#167d9b;font-size:11px;font-weight:800;letter-spacing:.13em;margin:0 0 7px}.card h2{font-size:23px;margin:0 0 8px}.lead{font-size:13px;color:#637780;margin:0 0 24px;line-height:1.8}
+    .field{margin-bottom:18px}.field label{display:block;font-size:13px;font-weight:700;margin-bottom:8px}.field input{width:100%;border:1px solid #cdd9de;border-radius:10px;padding:13px 14px;min-height:49px;outline:none;color:#142b37;background:#fff;font-size:16px}.field input:focus{border-color:#088bb0;box-shadow:0 0 0 3px #16b6d61e}.password-wrap{position:relative}.password-wrap input{padding-right:76px}.show-pass{position:absolute;top:5px;right:5px;bottom:5px;border:0;background:#f0f5f7;color:#305567;border-radius:7px;padding:0 11px;font-size:12px;cursor:pointer}
+    .policy{font-size:11px;line-height:1.6;color:#687a84;margin:-7px 0 20px}.primary{display:block;border:0;background:#133646;color:#fff;border-radius:10px;padding:15px 20px;font-size:15px;font-weight:750;width:100%;min-height:50px;cursor:pointer}.primary:hover:not(:disabled){background:#0c516b}.primary:disabled{opacity:.48;cursor:not-allowed}
+    .status{margin:14px 0 0;color:#6a4f12;background:#fff7e4;border:1px solid #f1dba3;border-radius:9px;padding:12px;font-size:12px;line-height:1.65}.status.error{color:#9b2929;background:#fff2f2;border-color:#efc3c3}.status.good{color:#137044;background:#eefaf2;border-color:#bbdfc7}#login-status.good{display:none}.support{display:flex;justify-content:flex-end;margin-top:14px}.support button{border:0;background:transparent;color:#276582;font-size:12px;cursor:pointer;text-decoration:underline;padding:6px 0}.support button:disabled{color:#98a9b0;cursor:not-allowed}
+    .signup-link{text-align:center;margin:17px 0 0;font-size:13px;color:#5b707d}.signup-link a{color:#126889;font-weight:750;text-decoration:underline}
+    .footer{text-align:center;color:#b2c2cb;font-size:11px;margin-top:26px;letter-spacing:.04em}.footer strong{color:#ecf5f8}
+    @media(max-width:390px){.identity img{width:58px;height:58px}.identity h1{font-size:18px}.card{padding:25px 20px}}
+  </style>
+  <script defer src="./admin-refresh.js?asset=20261015-admin-fresh-sku-stock"></script>
+<style id="meb-copyright-style">.meb-copyright{box-sizing:border-box;display:block;flex:none;max-width:410px;width:100%;margin:10px auto 0;padding:10px 14px;text-align:center;color:#8c98a0;font:11px/1.7 -apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;letter-spacing:.025em}@media print{.meb-copyright{display:none!important}}</style></head>
+<body>
+  <main class="shell">
+    <header class="identity">
+      <img src="./myexpobag_admin_icon.png" alt="MY EXPO BAG 管理用アイコン">
+      <div><h1>MY EXPO BAG</h1><p>ADMIN · 出展者管理ページ</p></div>
+    </header>
+    <section class="card" aria-labelledby="login-title">
+      <p class="tag">EXHIBITOR LOGIN</p>
+      <h2 id="login-title">ログイン</h2>
+      <p class="lead">登録済みのメールアドレスとパスワードを入力してください。</p>
+      <form id="login-form" autocomplete="on">
+        <div class="field">
+          <label for="login-email">メールアドレス</label>
+          <input id="login-email" name="email" type="email" autocomplete="username" inputmode="email" placeholder="name@brand.com" required maxlength="254">
+        </div>
+        <div class="field">
+          <label for="login-password">パスワード</label>
+          <div class="password-wrap">
+            <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="パスワードを入力" required>
+            <button id="toggle-password" class="show-pass" type="button" aria-pressed="false">表示</button>
+          </div>
+        </div>
+        <p class="policy">※ 新規登録は8文字以上・英大文字・小文字・数字・記号（@ &amp; - _ のいずれか）が必要です。</p>
+        <button id="login-submit" class="primary" type="submit" disabled>ログイン</button>
+      </form>
+      <div class="support"><button type="button" id="reset-password" disabled>パスワードを忘れた場合</button></div>
+      <p class="signup-link">アカウントをお持ちでない方は <a id="signup-link" href="./signup.html">新規アカウント作成</a></p>
+      <p id="login-status" class="status" role="status" aria-live="polite">Firebaseへの接続を確認しています…</p>
+    </section>
+    <p class="footer">POWERED BY <strong>MY EXPO BAG</strong>　v1.0.1</p>
+  </main>
+  <script src="./firebase-config.js"></script>
+  <script type="module" src="./login-auth.js"></script>
+  <div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta name="robots" content="noindex,nofollow,noarchive">
+<link href="./assets/favicon-admin.png?v=20261016-icon-1" rel="icon" sizes="64x64" type="image/png"/>
+<link href="./assets/favicon-admin.ico?v=20261016-icon-1" rel="shortcut icon"/>
+<link href="./myexpobag_admin_icon_180.png?v=20261016-icon-1" rel="apple-touch-icon" sizes="180x180"/>
+<link href="./admin.webmanifest?v=20261016-icon-1" rel="manifest"/>
+<meta content="EXPO BAG管理" name="apple-mobile-web-app-title"/>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<meta content="#101d26" name="theme-color"/>
+<meta content="noindex,nofollow" name="robots"/>
+<title>初回ブランド登録 | MY EXPO BAG 管理</title>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black" name="apple-mobile-web-app-status-bar-style"/>
+<style>
+    :root{font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",Arial,sans-serif;color:#152832}*{box-sizing:border-box}
+    body{margin:0;min-height:100dvh;background:linear-gradient(150deg,#132a36,#0c121a);padding:calc(env(safe-area-inset-top,0px) + 30px) 16px 28px;display:flex;align-items:center;justify-content:center}
+    main{width:min(100%,410px)}.identity{text-align:center;color:white;margin-bottom:24px}.identity img{width:66px;height:66px;border-radius:17px}.identity h1{font-size:18px;margin:12px 0 0}
+    .card{background:white;padding:27px 23px;border-radius:18px}.card h2{font-size:22px;margin:0 0 10px}.lead,.note{font-size:12px;color:#657b85;line-height:1.75}
+    label{display:block;font-size:13px;font-weight:bold;margin:20px 0 8px}input{width:100%;border:1px solid #cad6dd;border-radius:9px;padding:13px;font-size:16px}
+    .slug{font-size:12px;line-height:1.6;color:#215572;background:#f0f5f7;padding:10px;border-radius:8px;overflow-wrap:anywhere}
+    button{font:inherit;cursor:pointer}.primary{margin-top:17px;width:100%;background:#153b4e;color:#fff;border:0;border-radius:9px;padding:15px;font-weight:bold}.primary:disabled{opacity:.5;cursor:default}
+    .secondary{display:block;margin:16px auto 0;background:none;border:0;color:#276a88;text-decoration:underline;font-size:13px}
+    .status{font-size:12px;line-height:1.7;padding:10px;margin:18px 0 0;border-radius:9px;background:#fff4de;color:#735013}.status.error{background:#fff0f0;color:#9d2424}.status.good{background:#eaf9f0;color:#17593e}
+  </style>
+<style id="meb-copyright-style">.meb-copyright{box-sizing:border-box;display:block;margin:16px auto 24px;padding:10px 14px;text-align:center;color:#8c98a0;font:11px/1.7 -apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;letter-spacing:.025em}@media print{.meb-copyright{display:none!important}}</style></head>
+<body>
+<main>
+<div class="identity"><img alt="管理用アイコン" src="./myexpobag_admin_icon.png"/><h1>MY EXPO BAG　管理</h1></div>
+<div class="card">
+<h2>初回ブランド登録</h2>
+<p class="lead">このログインにはまだブランド情報がありません。最初の1回だけ登録してください。</p>
+<form id="brand-setup-form">
+<label for="brand-setup-name">ブランド名（初回は半角英数字・半角記号）</label>
+<input autocomplete="organization" id="brand-setup-name" maxlength="60" minlength="2" placeholder="例：KAMO&amp;Co!" required=""/>
+<p class="slug">URL識別子：<strong id="brand-setup-slug">入力すると表示されます</strong></p>
+<p class="note">後から設定ページで日本語の表示名へ変更できます。商品QRに使うURL識別子は変更されません。</p>
+<label style="display:flex;align-items:center;gap:8px"><input id="brand-setup-same-operator" style="width:auto" type="checkbox"/>運営者名はブランド名と同じ</label>
+<label for="brand-setup-operator">運営会社・運営者名（必須）</label>
+<input id="brand-setup-operator" maxlength="120" placeholder="法人名または個人事業の運営者名" required=""/>
+
+
+<button class="primary" disabled="" id="brand-setup-submit" type="submit">ブランドを登録</button>
+</form>
+<p aria-live="polite" class="status" id="brand-setup-status" role="status">接続を確認しています…</p>
+<button class="secondary" id="brand-setup-logout" type="button">別のアカウントでログイン</button>
+</div>
+</main>
+<script src="./firebase-config.js"></script><script src="./brand-setup.js" type="module"></script>
+<div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
+</body></html>

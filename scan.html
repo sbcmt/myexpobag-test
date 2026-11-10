@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+
+<html lang="ja"><head>
+<meta name="robots" content="noindex,nofollow,noarchive">
+<link href="./assets/favicon-admin.png?v=20261016-icon-1" rel="icon" sizes="64x64" type="image/png"/>
+<link href="./assets/favicon-admin.ico?v=20261016-icon-1" rel="shortcut icon"/>
+<link href="./myexpobag_admin_icon_180.png?v=20261016-icon-1" rel="apple-touch-icon" sizes="180x180"/>
+<link href="./admin.webmanifest?v=20261016-icon-1" rel="manifest"/>
+<meta content="EXPO BAG管理" name="apple-mobile-web-app-title"/>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport"/>
+<meta content="#101d26" name="theme-color"/>
+<meta content="black" name="apple-mobile-web-app-status-bar-style"/>
+<title>購入QR読み取り｜MY EXPO BAG 管理</title>
+<script src="./firebase-config.js"></script>
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;color:#162632;background:#f2f5f7;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;min-height:100vh}button,input,textarea{font:inherit}button{cursor:pointer}
+header{padding:calc(16px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 18px max(16px,env(safe-area-inset-left,0px));background:#101d26;color:#fff}
+header>div{max-width:720px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:14px}header a{color:#fff;text-decoration:none;border:1px solid #79929e;padding:9px 11px;border-radius:9px;font-size:13px;flex-shrink:0}h1{font-size:17px;margin:0;line-height:1.4}
+main{max-width:720px;margin:auto;padding:20px 15px 60px}.card{background:#fff;border:1px solid #dce4e8;border-radius:16px;padding:20px;margin-bottom:15px;box-shadow:0 3px 12px rgba(15,35,48,.04)}[hidden]{display:none!important}
+h2{font-size:18px;margin:0 0 13px}p{font-size:14px;line-height:1.7}.muted{color:#657784}.eyebrow{font-size:12px;color:#4d6b7c;font-weight:800;letter-spacing:.04em;margin-bottom:6px}
+button{border:0;border-radius:10px;padding:14px 16px;background:#183e50;color:#fff;font-weight:750;min-height:45px}button:disabled{opacity:.45;cursor:not-allowed}button.secondary{background:#e9f0f4;color:#193647}.wide{width:100%}.row{display:flex;gap:9px;flex-wrap:wrap;margin:12px 0}.row button{flex:1}
+textarea{width:100%;padding:12px;border:1px solid #aec0cb;border-radius:9px;font-size:13px;resize:vertical;min-height:85px}details{margin-top:20px;color:#485b68}summary{cursor:pointer;font-size:13px}
+#reader{margin:14px auto;max-width:450px}#reader video{max-width:100%}#result{white-space:pre-wrap;line-height:1.7;overflow-wrap:anywhere;font-size:14px}#result.good{color:#125f45}#result.error{color:#b12020}
+.scan-instruction{margin:0 0 6px;color:#425d6c;font-size:13px;line-height:1.5}#scan-panel>.row{margin-top:8px}
+.warning{border-radius:10px;background:#fff4dd;padding:12px;color:#714b0a;font-size:13px;line-height:1.6}.subnote{margin-top:10px;font-size:13px;color:#596f7b;line-height:1.5}
+.line-list{display:flex;flex-direction:column;gap:10px;list-style:none;padding:0;margin:15px 0}.line-list li{display:flex;flex-direction:column;gap:10px;align-items:stretch;background:#f2f6f8;border:1px solid #e2e9ed;border-radius:10px;padding:14px 12px}.line-info{display:flex;align-items:center;justify-content:space-between;gap:10px}.cancel-line{background:#fff3f1!important;border:1px solid #df9f92!important;color:#923b30!important;min-height:38px!important;padding:8px 12px!important;font-size:13px!important}.line-name{font-weight:800;font-size:17px;line-height:1.45}.line-variant{font-size:14px;margin-top:5px;color:#4b6574;font-weight:650}.line-code{font-size:11px;margin-top:5px;color:#71828b}.line-qty{font-size:19px;font-weight:900;white-space:nowrap}.gift-notice{border:3px solid #e6a300;background:#fff2b4;color:#633300;font-weight:900;border-radius:12px;padding:17px 14px;font-size:20px;line-height:1.5;box-shadow:0 3px 10px #b4780020}.product-novelty-tag{display:inline-block;background:#f2e8cf;color:#624b23;padding:4px 7px;border-radius:6px;font-size:11px;font-weight:800;margin-top:5px}.big-total{border-top:1px solid #d6dfe4;margin-top:12px;padding-top:15px;display:flex;justify-content:space-between;align-items:center;gap:12px}.big-total strong{font-size:32px;letter-spacing:-.03em;white-space:nowrap}
+.confirm-field{display:flex;gap:12px;align-items:flex-start;padding:14px;margin:17px 0;background:#eaf5fa;border-radius:10px;font-size:15px;line-height:1.55;font-weight:750}.confirm-field input{width:22px;height:22px;flex:0 0 22px;margin-top:1px;accent-color:#183e50}
+.status-badge{display:inline-block;border-radius:20px;background:#e5f6ee;color:#0d6a48;padding:7px 12px;font-size:13px;font-weight:800}.finish-heading{font-size:22px;font-weight:850;line-height:1.5}.step-hint{color:#425d6c;line-height:1.7;font-size:14px}
+@media(max-width:390px){h1{font-size:15px}.card{padding:15px}.big-total strong{font-size:28px}}
+</style> <script defer="" src="./admin-refresh.js?asset=20261015-sku-stock-watch"></script>
+<style id="meb-copyright-style">.meb-copyright{box-sizing:border-box;display:block;margin:16px auto 24px;padding:10px 14px;text-align:center;color:#8c98a0;font:11px/1.7 -apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;letter-spacing:.025em}@media print{.meb-copyright{display:none!important}}</style><script defer="" src="./shipping-utils.js?asset=20261015-after-scan"></script><link rel="stylesheet" href="./admin-navigation.css?v=20261016-v114"/>
+</head><body>
+<header class="meb-admin-nav-host"><div class="meb-admin-page-header"><h1 class="meb-admin-page-title">MY EXPO BAG｜購入QR読み取り</h1><a class="meb-admin-back" href="./admin.html">← 管理ページ</a></div></header>
+<main>
+<p class="muted" id="auth-state" role="status">管理者認証を確認中…</p>
+<section class="card" id="scan-panel">
+<div class="eyebrow">STEP 1 / QR読み取り</div><h2>お客様の購入QRを読み取る</h2>
+<p class="scan-instruction">お客様のQRを読み取ると、購入内容を確認できます。</p>
+<div class="row"><button disabled="" id="camera-start" type="button">読み取り開始</button><button class="secondary" disabled="" id="camera-stop" type="button">カメラ停止</button></div>
+<div id="reader"></div>
+<p aria-live="polite" id="result" role="status">「読み取り開始」で購入QRをスキャンしてください。</p>
+</section>
+<section class="card" hidden="" id="review-panel">
+<div class="eyebrow">STEP 2 / 在庫確保済み・お客様と確認</div><h2>ご注文内容の確認</h2><span class="status-badge" id="review-status">在庫確保済み</span>
+<p class="warning"><strong>この画面をお客様にもお見せください。</strong><br/>商品名・バリエーション・数量・合計金額に間違いがないか、必ず目視でご確認いただきます。</p>
+<ul aria-label="ご注文の商品" class="line-list" id="review-items"></ul>
+<div class="big-total"><span>お支払い合計（税込・送料含む）</span><strong id="review-total"></strong></div><p class="subnote" id="review-shipping"></p><p class="gift-notice" hidden="" id="review-gift"></p>
+<p class="subnote">在庫はQR読取時に確保済みです。取消した商品は在庫へ戻り、組合せ割引を含めて金額を再計算します。</p>
+<label class="confirm-field"><input id="customer-checked" type="checkbox"/>お客様と商品・数量・金額を確認しました</label>
+<p class="error" hidden="" id="review-error" role="alert" style="color:#b12020;white-space:pre-wrap"></p>
+<button class="wide" disabled="" id="prepare" type="button">商品準備をする</button>
+<button class="secondary wide" id="cancel-all" style="margin-top:9px" type="button">残りの商品をすべて取り消す</button><button class="secondary wide" id="retry" style="margin-top:9px" type="button">別のQRへ戻る（確保した在庫は維持）</button>
+</section>
+<section class="card" hidden="" id="prepared-panel">
+<div class="eyebrow">STEP 3 / 商品準備</div><span class="status-badge">在庫確保済み</span>
+<h2 class="finish-heading" style="margin-top:14px">商品を準備してください</h2>
+<p class="step-hint">準備する商品と数量はこちらです。購入者画面にも「商品を確認しました」と表示されます。</p>
+<ul aria-label="準備する商品" class="line-list" id="prepared-items"></ul><div class="big-total"><span>お支払い合計（税込・送料含む）</span><strong id="prepared-total"></strong></div><p class="subnote" id="prepared-shipping"></p><p class="gift-notice" hidden="" id="prepared-gift"></p><p class="subnote">取消した商品は在庫に戻り、合計金額を更新します。</p>
+<button class="wide" id="handoff" type="button">お渡し・予約受付を完了して閉じる</button><button class="secondary wide" id="prepared-cancel-all" style="margin-top:9px" type="button">残りの商品をすべて取り消す</button>
+</section>
+<section class="card" hidden="" id="cancelled-panel"><div class="eyebrow">注文取消</div><h2>すべての商品を取り消しました</h2><p class="step-hint">確保した在庫は戻しました。お客様のQR画面にも取消を通知します。</p><button class="wide" id="cancelled-next" type="button">次のQRを読む</button></section>
+<section class="card" hidden="" id="closed-panel">
+<div class="eyebrow">STEP 4 / 次のお客様へ</div><span class="status-badge">対応を閉じました</span>
+<h2 class="finish-heading" style="margin-top:14px">お渡しありがとうございます</h2>
+<p class="step-hint">次のお客様のQRを読み取れます。</p>
+<button class="wide" id="next-scan" type="button">次のQRを読む</button>
+</section>
+
+</main>
+<script defer="" onerror="console.warn('QRカメラライブラリの第1配信元を取得できませんでした。予備配信元を使用します。')" src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="./scan.js?asset=20261016-qr-japanese-v101" type="module"></script>
+<div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
+</body></html>

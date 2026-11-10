@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 560" role="img" aria-label="table">
+ <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#EDE8DF"/><stop offset="1" stop-color="#DADBD0"/></linearGradient>
+ <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#627069"/><stop offset="0.55" stop-color="#253b32"/><stop offset="1" stop-color="#142b25"/></linearGradient>
+ <linearGradient id="fabric" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#DACDB4"/><stop offset="1" stop-color="#B5A68A"/></linearGradient>
+ <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="15"/></filter>
+ </defs>
+ <rect width="560" height="560" fill="url(#bg)"/>
+ <path d="M-50 110 Q240 50 620 148" stroke="#fff" opacity=".18" stroke-width="110" fill="none"/>
+ <ellipse cx="280" cy="450" rx="155" ry="21" fill="#536454" opacity=".17" filter="url(#shadow)"/>
+ 
+ <path d="M175 274 L133 423" stroke="#34493A" stroke-width="16" stroke-linecap="round"/>
+ <path d="M385 274 L428 423" stroke="#34493A" stroke-width="16" stroke-linecap="round"/>
+ <path d="M204 280 L358 420 M355 280 L201 420" stroke="#6D796B" stroke-width="12"/>
+ <ellipse cx="280" cy="271" rx="199" ry="42" fill="#B78E5D"/>
+ <path d="M82 268 L98 229 Q276 208 458 229 L477 269 Q276 316 82 269Z" fill="#BD9868"/>
+ <ellipse cx="280" cy="230" rx="180" ry="34" fill="#D7B487"/>
+ <path d="M166 212 L179 285 M235 200 L241 296 M302 197 L302 299 M368 203 L362 288" stroke="#B18B5E" stroke-width="3" opacity=".6"/>
+ <ellipse cx="280" cy="231" rx="180" ry="34" fill="none" stroke="#E1C39C" stroke-width="4"/>
+
+ </svg>

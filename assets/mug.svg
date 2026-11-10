@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 560" role="img" aria-label="mug">
+ <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#E9E5DB"/><stop offset="1" stop-color="#D5DED4"/></linearGradient>
+ <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#627069"/><stop offset="0.55" stop-color="#253b32"/><stop offset="1" stop-color="#142b25"/></linearGradient>
+ <linearGradient id="fabric" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#DACDB4"/><stop offset="1" stop-color="#B5A68A"/></linearGradient>
+ <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="15"/></filter>
+ </defs>
+ <rect width="560" height="560" fill="url(#bg)"/>
+ <path d="M-50 110 Q240 50 620 148" stroke="#fff" opacity=".18" stroke-width="110" fill="none"/>
+ <ellipse cx="280" cy="450" rx="155" ry="21" fill="#536454" opacity=".17" filter="url(#shadow)"/>
+ 
+ <path d="M197 188 H348 L334 397 Q282 418 217 393Z" fill="url(#metal)" stroke="#293E34" stroke-width="6"/>
+ <path d="M348 219 H387 Q430 218 423 278 Q419 329 344 322" stroke="#33483F" stroke-width="31" fill="none" stroke-linejoin="round"/>
+ <path d="M350 223 H389 Q415 222 409 280 Q401 307 344 305" stroke="#D7D9CF" stroke-width="10" fill="none"/>
+ <ellipse cx="273" cy="192" rx="81" ry="18" fill="#1B2F26" stroke="#AAB3A6" stroke-width="8"/>
+ <ellipse cx="271" cy="190" rx="66" ry="11" fill="#34493D"/>
+ <path d="M215 225 V356" stroke="#AAB5A6" stroke-width="7" opacity=".55" stroke-linecap="round"/>
+ <path d="M222 393 Q265 405 320 390" stroke="#AAB6AA" opacity=".45" stroke-width="5" fill="none"/>
+
+ </svg>

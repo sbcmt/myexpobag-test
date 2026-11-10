@@ -1,0 +1,26 @@
+{
+  "id": "./admin.html",
+  "name": "EXPO BAG管理",
+  "short_name": "EXPO BAG管理",
+  "description": "MY EXPO BAG 出展者用管理ページ",
+  "lang": "ja",
+  "start_url": "./login.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0e1820",
+  "theme_color": "#0e1820",
+  "icons": [
+    {
+      "src": "./myexpobag_admin_icon_192.png?v=20261016-brand-icons",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./myexpobag_admin_icon_512.png?v=20261016-brand-icons",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

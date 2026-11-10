@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta name="robots" content="noindex,nofollow,noarchive">
+<link href="./assets/favicon-admin.png?v=20261016-icon-1" rel="icon" sizes="64x64" type="image/png"/>
+<link href="./assets/favicon-admin.ico?v=20261016-icon-1" rel="shortcut icon"/>
+<link href="./myexpobag_admin_icon_180.png?v=20261016-icon-1" rel="apple-touch-icon" sizes="180x180"/>
+<link href="./admin.webmanifest?v=20261016-icon-1" rel="manifest"/>
+<meta content="EXPO BAG管理" name="apple-mobile-web-app-title"/>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1, viewport-fit=cover" name="viewport"/>
+<meta content="#101d26" name="theme-color"/>
+<meta content="MY EXPO BAG 出展者用 新規アカウント登録" name="description"/>
+<meta content="noindex,nofollow" name="robots"/>
+<title>新規アカウント作成 | MY EXPO BAG 管理</title>
+<meta content="yes" name="apple-mobile-web-app-capable"/>
+<meta content="black" name="apple-mobile-web-app-status-bar-style"/>
+<style>
+    :root{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,"Noto Sans JP",sans-serif;color:#152832;font-synthesis:none}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;min-height:100dvh;background:linear-gradient(160deg,#132a36 0%,#0d1720 60%,#0c121a 100%);padding:calc(env(safe-area-inset-top,0px) + 24px) max(16px,env(safe-area-inset-right,0px)) calc(env(safe-area-inset-bottom,0px) + 28px) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;overflow-x:hidden}
+    button,input{font:inherit}.shell{width:min(100%,410px);flex:0 1 auto;min-width:0}.identity{display:flex;align-items:center;justify-content:center;gap:15px;color:white;margin:0 0 24px}.identity img{width:70px;height:70px;border-radius:17px;object-fit:cover}.identity h1{font-size:21px;line-height:1.35;letter-spacing:.015em;margin:0}.identity p{font-size:12px;color:#b5c8d2;margin:5px 0 0}
+    .card{padding:30px 26px 25px;background:#fff;border-radius:22px;box-shadow:0 22px 70px #040c1466}.tag{color:#167d9b;font-size:11px;font-weight:800;letter-spacing:.13em;margin:0 0 7px}.card h2{font-size:23px;margin:0 0 8px}.lead{font-size:13px;color:#637780;margin:0 0 24px;line-height:1.8}
+    .field{margin-bottom:16px}.field label{display:block;font-size:13px;font-weight:700;margin-bottom:8px}.field input{width:100%;border:1px solid #cdd9de;border-radius:10px;padding:13px 14px;min-height:49px;outline:none;color:#142b37;background:#fff;font-size:16px}.field input:focus{border-color:#088bb0;box-shadow:0 0 0 3px #16b6d61e}.password-wrap{position:relative}.password-wrap input{padding-right:76px}.show-pass{position:absolute;top:5px;right:5px;bottom:5px;border:0;background:#f0f5f7;color:#305567;border-radius:7px;padding:0 11px;font-size:12px;cursor:pointer}
+    .brand-preview{margin:7px 0 0;padding:9px 11px;border-radius:8px;background:#f0f5f7;color:#24536a;font-size:12px;overflow-wrap:anywhere}.brand-note{font-size:11px;color:#657b85;line-height:1.6;margin:7px 0 0}
+    .policy{font-size:12px;line-height:1.6;color:#687a84;margin:-2px 0 18px}.primary{display:block;border:0;background:#133646;color:#fff;border-radius:10px;padding:15px 20px;font-size:15px;font-weight:750;width:100%;min-height:50px;cursor:pointer}.primary:hover:not(:disabled){background:#0c516b}.primary:disabled{opacity:.48;cursor:not-allowed}
+    .status{margin:14px 0 0;color:#6a4f12;background:#fff7e4;border:1px solid #f1dba3;border-radius:9px;padding:12px;font-size:12px;line-height:1.65}.status.error{color:#9b2929;background:#fff2f2;border-color:#efc3c3}.status.good{color:#137044;background:#eefaf2;border-color:#bbdfc7}.back{text-align:center;margin:19px 0 0}.back a{font-size:13px;font-weight:700;color:#176a87;text-decoration:underline}.footer{text-align:center;color:#b2c2cb;font-size:11px;margin-top:26px;letter-spacing:.04em}.footer strong{color:#ecf5f8}
+    @media(max-width:390px){.identity img{width:58px;height:58px}.identity h1{font-size:18px}.card{padding:25px 20px}}
+  </style>
+<style id="meb-copyright-style">.meb-copyright{box-sizing:border-box;display:block;flex:none;max-width:410px;width:100%;margin:10px auto 0;padding:10px 14px;text-align:center;color:#8c98a0;font:11px/1.7 -apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;letter-spacing:.025em}@media print{.meb-copyright{display:none!important}}</style></head>
+<body>
+<main class="shell">
+<header class="identity">
+<img alt="MY EXPO BAG 管理用アイコン" src="./myexpobag_admin_icon.png"/>
+<div><h1>MY EXPO BAG</h1><p>ADMIN · 出展者アカウント</p></div>
+</header>
+<section aria-labelledby="signup-title" class="card">
+<p class="tag">CREATE ACCOUNT</p>
+<h2 id="signup-title">新規アカウント作成</h2>
+<p class="lead">メールアドレスとパスワードで登録できます。ブランド名も同時に登録します。登録後はメールの確認が必要です。</p>
+<form autocomplete="on" id="signup-form">
+<div class="field">
+<label for="signup-brand">ブランド名</label>
+<input autocomplete="organization" id="signup-brand" maxlength="60" minlength="2" name="brand" placeholder="例：KAMO&amp;Co!" required="" type="text"/>
+<p class="brand-preview">URL用識別子：<strong id="brand-slug-preview">ブランド名を入力すると表示されます</strong></p>
+<p class="brand-note">登録時は半角英数字・半角記号で入力。URL用の名前は小文字に変換され、記号・スペースは「-」になります。後から設定画面で日本語のブランド表示名に変更できます。URL用識別子は変更されません。</p>
+</div>
+<div class="field">
+<label style="display:flex;align-items:center;gap:8px"><input id="signup-same-operator" style="width:auto" type="checkbox">運営者名はブランド名と同じ</input></label>
+<label for="signup-operator">運営会社・運営者名（必須）</label>
+<input autocomplete="organization" id="signup-operator" maxlength="120" placeholder="法人名または個人事業の運営者名" required="" type="text"/>
+</div>
+
+<div class="field">
+<label for="signup-email">メールアドレス</label>
+<input autocomplete="email" id="signup-email" inputmode="email" maxlength="254" name="email" placeholder="name@brand.com" required="" type="email"/>
+</div>
+<div class="field">
+<label for="signup-password">パスワード</label>
+<div class="password-wrap">
+<input autocomplete="new-password" id="signup-password" minlength="8" name="password" placeholder="8文字以上" required="" type="password"/>
+<button aria-pressed="false" class="show-pass" id="signup-show-password" type="button">表示</button>
+</div>
+</div>
+<div class="field">
+<label for="signup-confirm">パスワード（確認）</label>
+<input autocomplete="new-password" id="signup-confirm" name="password-confirm" placeholder="もう一度入力" required="" type="password"/>
+</div>
+<p class="policy">8文字以上、英大文字・英小文字・数字・記号（@ &amp; - _ のいずれか）をすべて含めてください。これ以外の記号は使用できません。</p>
+<button class="primary" disabled="" id="signup-submit" type="submit">アカウントを作成</button>
+</form>
+<p aria-live="polite" class="status" id="signup-status" role="status">Firebaseへの接続を確認しています…</p>
+<p class="back"><a href="./login.html" id="back-login">ログイン画面に戻る</a></p>
+</section>
+<p class="footer">POWERED BY <strong>MY EXPO BAG</strong>　v1.0.1</p>
+</main>
+<script src="./firebase-config.js"></script>
+<script src="./signup-auth.js" type="module"></script>
+<div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
+</body>
+</html>

@@ -1,0 +1,6 @@
+ccce539b37a33c0895c60d881b881959a19d7d53210b7239b833597c8a4f76f8  assets/pop-template-print-a1.jpg
+a649a216f40a2f12f80ce3faf43a147906a386fd9b8ba68249703724ffb820c2  assets/pop-template-no-qr.png
+7ad4d7f32cd6e8c0670aa1d21f89861d85459527d3f354121e9b5cd0af814ee1  assets/pop-template-approved.png
+91742fff589e951ff24725cb3c0aaadcc5a7fbbdaf02403a791550b0684399a4  assets/pop-reference-approved.png
+a5612413b845b591b7a5a98ec42f6b05d6335593e54841bce3cfb45e93f345af  assets/pop-qr-logo.png
+9d33607fdc2093dac28f729ab0eddb9873310ad881f3a6c47b2dab69a91fd068  assets/pop-qr-logo.svg

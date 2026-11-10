@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta name="robots" content="noindex,nofollow,noarchive">
+<link rel="icon" type="image/png" sizes="64x64" href="./assets/favicon-admin.png?v=20261016-icon-1">
+<link rel="shortcut icon" href="./assets/favicon-admin.ico?v=20261016-icon-1">
+<link rel="apple-touch-icon" sizes="180x180" href="./myexpobag_admin_icon_180.png?v=20261016-icon-1">
+<link rel="manifest" href="./admin.webmanifest?v=20261016-icon-1">
+<meta name="apple-mobile-web-app-title" content="EXPO BAG管理">
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101d26">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  
+  
+  
+  
+  <title>イベント名設定 | MY EXPO BAG 管理</title>
+  <style>
+    :root{font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP","Helvetica Neue",Arial,sans-serif;color:#19303c;background:#f3f5f6}
+    *{box-sizing:border-box}body{margin:0;min-height:100dvh}button,input{font:inherit}a{color:inherit}
+    .top{background:#101d26;color:#fff;padding:calc(env(safe-area-inset-top,0px) + 13px) max(18px,env(safe-area-inset-right,0px)) 15px max(18px,env(safe-area-inset-left,0px));display:flex;align-items:center;gap:14px}
+    .top a{font-size:13px;text-decoration:none;background:#213a47;border:1px solid #42606d;border-radius:9px;padding:10px 12px;color:#dce9f0;flex:none}.top strong{font-size:16px}
+    .wrap{width:min(600px,100%);margin:auto;padding:20px 16px 48px}.card{background:white;border-radius:16px;border:1px solid #e1e8ec;padding:20px;box-shadow:0 3px 16px #17293609}
+    h1{font-size:20px;margin:0 0 10px}.help{font-size:13px;color:#5b7280;line-height:1.75;margin:0 0 24px}
+    label{display:block;font-weight:700;font-size:13px;margin-bottom:9px}input{width:100%;min-height:50px;border:1px solid #c4d6de;border-radius:9px;padding:12px;font-size:16px;color:#19303c;background:#fff}input:focus{outline:2px solid #2a91a9;outline-offset:1px}
+    .note{font-size:12px;color:#667c88;line-height:1.65;margin:9px 0 25px}.preview{background:#f4f8fa;border:1px solid #e0e9ee;border-radius:11px;padding:16px;margin-bottom:20px}.preview small{display:block;color:#5f7b89;font-size:12px;margin-bottom:5px}.preview strong{font-size:17px;word-break:break-word}
+    .primary{width:100%;background:#142e3c;border:0;border-radius:9px;color:white;min-height:48px;padding:13px;font-weight:750;cursor:pointer}.primary:disabled{opacity:.55;cursor:not-allowed}.status{font-size:13px;line-height:1.7;margin:13px 0 0}.status.error{color:#aa2626}.status.ok{color:#146a3c}
+    .loading{padding:80px 15px;text-align:center;font-size:13px;color:#687b85}footer{text-align:center;color:#8998a1;font-size:11px;padding-top:24px}
+  </style>
+<style id="meb-copyright-style">.meb-copyright{box-sizing:border-box;display:block;margin:16px auto 24px;padding:10px 14px;text-align:center;color:#8c98a0;font:11px/1.7 -apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;letter-spacing:.025em}@media print{.meb-copyright{display:none!important}}</style><link rel="stylesheet" href="./admin-navigation.css?v=20261016-v114"/>
+</head>
+<body>
+  <header class="top meb-admin-page-header"><strong class="meb-admin-page-title">イベント名設定</strong><a class="meb-admin-back" href="./admin.html">← 管理ページ</a></header>
+  <p class="loading" id="loading" role="status">ブランド情報を確認しています…</p>
+  <main id="shell" class="wrap" hidden>
+    <section class="card">
+      <h1>イベント名設定</h1>
+      <p class="help">お客様ページのブランド名の下に表示するイベント名です。展示会ごとに変更できます。未入力ならイベント名の行を表示しません。</p>
+      <form id="event-form">
+        <label for="event-name">現在のイベント名（80文字以内・任意）</label>
+        <input id="event-name" type="text" maxlength="80" placeholder="例：OUTDOOR EXPO 2026 / 秋の展示会" autocomplete="off">
+        <p class="note">日本語・英数字・記号で自由に入力できます。ブランドごとに保存されます。</p>
+        <div class="preview"><small>お客様ページでの表示イメージ</small><strong id="brand-name-preview">ブランド名</strong><div id="event-name-preview" style="margin-top:5px;font-size:13px;color:#667c88"></div></div>
+        <button id="save-event" class="primary" type="submit" disabled>イベント名を保存</button>
+        <p id="event-status" class="status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+    <footer>MY EXPO BAG · v1.0.1</footer>
+  </main>
+  <script src="./firebase-config.js"></script>
+  <script type="module" src="./event-settings.js"></script>
+<div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
+</body>
+</html>

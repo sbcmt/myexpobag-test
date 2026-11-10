@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 560" role="img" aria-label="tote">
+ <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#E7E2D7"/><stop offset="1" stop-color="#CCD8CC"/></linearGradient>
+ <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#627069"/><stop offset="0.55" stop-color="#253b32"/><stop offset="1" stop-color="#142b25"/></linearGradient>
+ <linearGradient id="fabric" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#DACDB4"/><stop offset="1" stop-color="#B5A68A"/></linearGradient>
+ <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="15"/></filter>
+ </defs>
+ <rect width="560" height="560" fill="url(#bg)"/>
+ <path d="M-50 110 Q240 50 620 148" stroke="#fff" opacity=".18" stroke-width="110" fill="none"/>
+ <ellipse cx="280" cy="450" rx="155" ry="21" fill="#536454" opacity=".17" filter="url(#shadow)"/>
+ 
+ <path d="M216 224 V173 Q216 132 280 132 Q344 132 344 173 V225" fill="none" stroke="#9E916F" stroke-width="17" stroke-linecap="round"/>
+ <path d="M172 209 L389 209 L408 424 Q289 462 154 424Z" fill="url(#fabric)" stroke="#AB9E83" stroke-width="6"/>
+ <path d="M181 226 L380 226 L397 416 Q289 450 164 416Z" fill="none" stroke="#E6D9B9" stroke-width="5"/>
+ <path d="M220 228 V275 M340 228 V275" stroke="#9D8E6F" stroke-width="10" stroke-linecap="round"/>
+ <path d="M251 312 H312 M252 326 H309" stroke="#5B705D" stroke-width="6" stroke-linecap="round"/>
+
+ </svg>
