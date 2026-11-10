@@ -48,6 +48,23 @@
 .variant-editor-table .price-note{font-size:10px;color:#5c7785;margin-top:3px;white-space:nowrap}
 .reservation-date{flex-wrap:nowrap!important;white-space:nowrap}.reservation-date select{flex:none}
 .product-tab-panel .reservation-scroller{overflow-x:auto}
+
+/* UI review: visible catalog filters and publication-state chip */
+.product-catalog-overview{border-color:#cbdce3}
+.product-filters{display:grid;grid-template-columns:minmax(190px,2fr) minmax(140px,1fr) minmax(175px,1.1fr);gap:11px;padding:11px;background:#f5f9fb;border:1px solid #e0e9ee;border-radius:11px;margin:12px 0 9px}
+.product-filters .field{margin:0}.product-filters .field span{font-size:12px;font-weight:700}
+.product-filters input,.product-filters select{min-height:43px;padding:9px 11px;font-size:14px}
+.product-results-summary{color:#5b7180;font-size:12px;margin:9px 0 4px}
+.product-state-tags{display:flex;gap:5px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.catalog-tag{display:inline-flex;align-items:center;padding:3px 7px;border-radius:99px;font-size:11px;font-weight:700;border:1px solid #d5e3eb;color:#31546a;background:#f0f6fa}
+.catalog-tag.ok{color:#1c673e;background:#edf9f1;border-color:#bdddc9}.catalog-tag.warn{color:#8a5a08;background:#fff8e7;border-color:#f0dcad}.catalog-tag.off{color:#536b79;background:#f3f6f7;border-color:#d9e1e4}.catalog-tag.empty{color:#a5362d;background:#fff1ef;border-color:#eed0c9}
+.product-list .product{padding:15px 0}.product-list .product-info{padding-right:6px}
+.publish-state{border:1px solid #d5e0e7;border-radius:10px;background:#f5f8fa;padding:10px 12px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:750;color:#3f5b69;margin:10px 0}
+.publish-state[data-state="pending"]{background:#fff8e8;border-color:#e9d49c;color:#785214}.publish-state[data-state="published"]{background:#ebf7ef;border-color:#b9dcc4;color:#23613c}.publish-state[data-state="error"]{background:#fff2ef;border-color:#eac5bf;color:#993a31}
+.publish-state-marker{display:inline-block;width:9px;height:9px;border-radius:50%;background:currentColor;flex:none}
+.publish-explain{font-size:12px;color:#526a79;line-height:1.7;margin:0 0 12px}
+@media(max-width:680px){.product-filters{grid-template-columns:1fr 1fr;gap:9px}.product-filters .field:first-child{grid-column:1/-1}}
+@media(max-width:420px){.product-filters{grid-template-columns:1fr}.product-filters .field:first-child{grid-column:auto}}
 </style><style id="meb-copyright-style">.meb-copyright{box-sizing:border-box;display:block;margin:16px auto 24px;padding:10px 14px;text-align:center;color:#8c98a0;font:11px/1.7 -apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;letter-spacing:.025em}@media print{.meb-copyright{display:none!important}}</style><link rel="stylesheet" href="./admin-navigation.css?v=20261016-v114"/>
 </head>
 <body>
@@ -56,9 +73,20 @@
 <div class="notice" id="loading">ログインとブランド情報を確認しています…</div>
 <div hidden="" id="shell">
 <section aria-label="公開操作" class="card"><div class="toolbar"><h2>お客様ページへの反映</h2><span class="pill">ブランド別</span></div>
+<div class="publish-state" id="publish-state" data-state="loading" role="status" aria-live="polite"><span class="publish-state-marker" aria-hidden="true"></span><span id="publish-state-text">公開状況を確認しています…</span></div>
+<p class="publish-explain">「商品を保存」は管理画面に保存する操作です。購入者向けの変更は「お客様ページに反映」を押すまで公開されません。</p>
 <div class="row"><button class="primary" id="publish-catalog" type="button">お客様ページに反映</button><a href="./index.html" id="public-customer-link" rel="noopener noreferrer" target="_blank">お客様ページを別タブで確認 ↗</a></div>
 <p aria-live="polite" class="status" hidden="" id="publish-status" role="status"></p></section>
 <p aria-live="polite" class="status" hidden="" id="status" role="status"></p>
+<section class="card product-catalog-overview" id="registered-products" aria-labelledby="registered-products-title">
+<div class="toolbar"><div><h2 id="registered-products-title">登録済み商品 <span id="product-count">0</span>件</h2><p class="muted" style="margin:0">登録した商品を検索し、編集・公開状況を確認できます。</p></div><button id="refresh-products" type="button">一覧を更新</button></div>
+<div class="product-filters" aria-label="登録商品を絞り込む">
+ <label class="field" for="product-filter-search"><span>商品名・商品ID</span><input type="search" id="product-filter-search" placeholder="商品名・商品IDで検索" autocomplete="off"/></label>
+ <label class="field" for="product-filter-category"><span>カテゴリ</span><select id="product-filter-category"><option value="">すべてのカテゴリ</option></select></label>
+ <label class="field" for="product-filter-state"><span>表示・在庫状態</span><select id="product-filter-state"><option value="all">すべて</option><option value="published">公開済み</option><option value="pending">公開待ち・変更未反映</option><option value="hidden">非公開設定</option><option value="preorder">予約販売</option><option value="soldout">在庫切れ</option></select></label>
+</div>
+<div class="product-results-summary" id="product-results-summary" aria-live="polite">0件</div>
+<div class="product-list" id="product-list"><p class="muted">商品はまだ登録されていません。</p></div></section>
 <section class="card"><div class="toolbar"><h2>カテゴリ設定</h2><span class="pill" id="category-count">0件</span></div>
 <div class="category-list" id="categories"></div>
 <form class="row" id="category-form"><input aria-label="追加するカテゴリ" id="new-category" maxlength="40" placeholder="例：ランタン、バッグ、雑貨" required="" style="flex:1;min-width:180px;padding:11px;border-radius:9px;border:1px solid #bbcbd5;font:inherit;font-size:14px"/><button class="primary" type="submit">カテゴリを追加</button></form>
@@ -135,7 +163,7 @@
 </section>
 <div class="editor-actions row"><button class="primary" id="product-save" type="submit">商品を保存</button><button id="product-clear" type="button">入力をクリア</button><span class="muted" id="edit-note">新規登録</span></div>
 </form></section>
-<section class="card"><div class="toolbar"><h2>登録済み商品 <span id="product-count">0</span>件</h2><button id="refresh-products" type="button">一覧を更新</button></div><div class="product-list" id="product-list"><p class="muted">商品はまだ登録されていません。</p></div></section>
+
 
 </div>
 <footer>POWERED BY MY EXPO BAG　v1.0.1</footer>
@@ -172,6 +200,6 @@
   },15000);
 })();
 </script>
-<script onerror="window.MEB_PRODUCTS_STARTUP_ERROR?.()" src="./products.js?asset=20261110-novelty-settings-only-v1" type="module"></script>
+<script onerror="window.MEB_PRODUCTS_STARTUP_ERROR?.()" src="./products.js?asset=20261110-ui-review3-v1" type="module"></script>
 <div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
 </body></html>
