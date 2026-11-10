@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<link rel="icon" href="./assets/favicon-admin.png" type="image/png" sizes="64x64">
+<link rel="shortcut icon" href="./assets/favicon-admin.ico">
+<link rel="apple-touch-icon" href="./myexpobag_admin_icon_180.png" sizes="180x180">
+<link rel="manifest" href="./admin.webmanifest">
+<meta name="theme-color" content="#101d26">
+<title>プラン・お支払い | MY EXPO BAG 管理</title>
+<link rel="stylesheet" href="./admin-navigation.css">
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;color:#19303c;background:#f3f5f6}*{box-sizing:border-box}body{margin:0}.top{background:#101d26;color:#fff;padding:19px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}.top a{color:white;text-decoration:none;background:#253c4b;padding:9px 12px;border-radius:8px;font-size:13px}.wrap{width:min(700px,100%);margin:0 auto;padding:20px 16px}.card{background:white;border:1px solid #dee8ec;border-radius:15px;padding:22px;margin-bottom:16px}h1{font-size:22px;margin:0 0 6px}h2{font-size:16px;margin:0 0 14px}.muted{color:#617987;font-size:13px;line-height:1.7}.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.price{font-size:28px;font-weight:850;margin:12px 0}.btn{display:block;width:100%;padding:13px;border-radius:9px;border:1px solid #155575;background:#155575;color:#fff;font-size:14px;font-weight:700;cursor:pointer}.btn:disabled{opacity:.45;cursor:not-allowed}.btn.secondary{background:#fff;color:#155575}.status{min-height:20px;font-size:13px;color:#1b5b47;margin:12px 0}.status.error{color:#b42323}.tag{font-size:13px;font-weight:700;border:1px solid #cedde3;border-radius:99px;padding:4px 10px;display:inline-block}footer{text-align:center;font-size:11px;color:#8495a0;padding:20px}@media(max-width:500px){.cards{grid-template-columns:1fr}.card{padding:17px}}
+</style>
+<script src="./firebase-config.js"></script>
+<script src="./billing-config.js"></script>
+<script src="./meb-plan.js?v=20261110-three-roles-2" defer></script>
+</head><body>
+<header class="top meb-admin-page-header"><strong class="meb-admin-page-title">プラン・お支払い</strong><a class="meb-admin-back" href="./admin.html">← 管理ページ</a></header>
+<main class="wrap">
+<section class="card"><h1>ご利用プラン</h1><p id="plan-status" class="muted">確認しています…</p><p class="muted">MY EXPO BAG テスト環境。ここではStripeのSandbox決済のみを使用します。実際の請求は発生しません。</p><p id="payment-status" class="status" role="status" aria-live="polite"></p></section>
+<div class="cards">
+<section class="card"><span class="tag">Free</span><div class="price">¥0</div><p class="muted">商品10点まで。通常販売、公式POP、ホワイトプライスカードをご利用いただけます。</p><button class="btn secondary" disabled>無料プラン</button></section>
+<section class="card"><span class="tag">Pro.</span><div class="price">¥1,000 <small style="font-size:14px">/月</small></div><p class="muted">予約販売・組合せ商品・CSV・配送管理・アクセントカードなどの拡張機能。</p><button id="buy-monthly" type="button" class="btn" disabled>月額プランをテスト購入</button><div style="height:10px"></div><button id="buy-yearly" type="button" class="btn secondary" disabled>年額 ¥10,000 をテスト購入</button></section>
+</div>
+<section class="card"><h2>契約の確認・解約</h2><p class="muted">決済済みアカウントのみ、Stripeの契約管理画面を開けます。Tester権限には請求がありません。</p><button id="manage-billing" class="btn secondary" disabled>Stripeの契約を管理する</button><button type="button" class="btn secondary" id="refresh" style="margin-top:10px">プラン状態を再確認</button></section>
+<footer>© 2021–2026 Dobhar-chú</footer>
+</main>
+<script type="module" src="./billing.js?v=20261110-spark-stripe-1"></script>
+</body></html>
