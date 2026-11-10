@@ -1,0 +1,61 @@
+<!doctype html>
+<html class="auth-pending" lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow,noarchive"><meta name="theme-color" content="#101d26">
+<title>登録商品一覧・簡易編集｜MY EXPO BAG</title>
+<link rel="icon" href="./assets/favicon-admin.png?v=20261016-icon-1" type="image/png" sizes="64x64">
+<link rel="shortcut icon" href="./assets/favicon-admin.ico?v=20261016-icon-1">
+<link rel="apple-touch-icon" href="./myexpobag_admin_icon_180.png?v=20261016-icon-1" sizes="180x180">
+<link rel="manifest" href="./admin.webmanifest?v=20261016-icon-1">
+<meta name="apple-mobile-web-app-title" content="EXPO BAG管理">
+<script src="./firebase-config.js"></script>
+<link rel="stylesheet" href="./admin-navigation.css?v=20261016-v114">
+<style>
+:root{font-family:-apple-system,BlinkMacSystemFont,"Noto Sans JP",Arial,sans-serif;color:#142734;background:#f2f5f7;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0;min-height:100vh}.auth-pending #shell{visibility:hidden}
+header{background:#101d26;color:white}main{width:min(1120px,100%);padding:18px 16px 70px;margin:auto}
+.card{background:#fff;border:1px solid #dae5ea;border-radius:15px;padding:18px;margin-bottom:14px;box-shadow:0 3px 16px #102c3810}
+h1{font-size:18px;margin:0}.lead{font-size:13px;color:#617683;line-height:1.8;margin:4px 0 0}
+.toplinks{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 14px}.toplinks a{padding:9px 13px;background:#edf5f8;color:#194455;text-decoration:none;border-radius:9px;font-size:13px;font-weight:650}
+.filters{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin:12px 0}
+label{font-size:12px;font-weight:700}.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+input,select{padding:10px;border:1px solid #b9cbd5;border-radius:8px;font:inherit;font-size:14px;min-width:0;width:100%;background:#fff;color:#142734}
+input[type=checkbox]{height:19px;width:19px;accent-color:#186181;flex:none;cursor:pointer}
+button{border:1px solid #bfd0d8;background:#f1f7fa;color:#174457;padding:10px 12px;border-radius:8px;cursor:pointer;font:inherit;font-size:13px;font-weight:700}
+button.primary{background:#163847;color:white;border-color:#163847}button:disabled{opacity:.55;cursor:not-allowed}
+.btn-small{padding:8px 11px}.row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.summary{font-size:12px;color:#58707d}.status{padding:12px;border-radius:10px;background:#e9f7ed;color:#205b37;font-size:13px;line-height:1.65;white-space:pre-wrap}.status.error{background:#fff0ed;color:#953d38}
+.item{border:1px solid #dfe8ec;border-radius:12px;padding:14px;margin-top:12px}
+.itemhead{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.item-name{font-size:15px;font-weight:750;margin:0;overflow-wrap:anywhere}.item-info{font-size:12px;color:#637684;margin:5px 0 0;line-height:1.6}
+.pills{display:flex;gap:6px;flex-wrap:wrap}.pill{border:1px solid #d8e4e9;border-radius:99px;font-size:11px;padding:5px 8px;background:#f6f8fa;color:#426171}
+.pill.pending{color:#815214;border-color:#efd2a0;background:#fff7e6}.pill.ok{color:#226443;border-color:#bbdfcd;background:#eaf8f0}.pill.off{color:#6b7680}
+.form-grid{display:grid;grid-template-columns:125px 1fr 1fr 1fr;gap:10px;align-items:end}.form-grid .field{margin:0}
+.toggle{display:flex;align-items:center;gap:8px;white-space:nowrap;padding:10px 0;font-size:13px}
+.variants{border:1px solid #dfe9ee;border-radius:10px;margin:12px 0 0;padding:10px 12px;background:#f8fafb}
+.variants>summary{font-size:13px;font-weight:750;color:#225169;cursor:pointer}.variant-grid{display:grid;grid-template-columns:minmax(125px,2fr) repeat(3,minmax(90px,1fr));gap:9px;align-items:end;padding:10px 0;border-top:1px solid #e1eaed}
+.variant-grid:first-of-type{margin-top:10px}.variant-name{font-size:12px;font-weight:650;overflow-wrap:anywhere}.hint{font-size:11px;color:#68808c;line-height:1.55;font-weight:400}
+.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:13px;align-items:center}
+.empty{padding:30px;text-align:center;color:#5c7180}.warning{border-left:4px solid #d2a647;padding:10px 12px;background:#fff9e9;font-size:12px;line-height:1.7}
+footer{text-align:center;color:#82909a;font-size:11px;margin:25px 0}
+@media(max-width:780px){.form-grid{grid-template-columns:1fr 1fr}.toggle{grid-column:1/-1}.variant-grid{grid-template-columns:1fr 1fr}.variant-name{grid-column:1/-1}}
+@media(max-width:540px){.filters{grid-template-columns:1fr}.card{padding:14px}.form-grid{grid-template-columns:1fr 1fr}.itemhead{align-items:flex-start}.variant-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<header class="meb-admin-page-header"><div class="meb-admin-page-title"><h1>登録商品一覧・簡易編集</h1><p style="font-size:11px;color:#b9ced8;margin:4px 0 0" id="brand-name">MY EXPO BAG TEST</p></div><a href="./admin.html" class="meb-admin-back">← 管理ページ</a></header>
+<main>
+<p id="loading" class="status" role="status">ログイン・商品情報を読み込んでいます…</p>
+<div id="shell" hidden>
+ <div class="toplinks"><a href="./products.html">＋ 商品を新規登録</a><a href="./products.html">商品詳細・CSVを編集</a><a href="./settings.html">ブランド設定</a></div>
+ <section class="card" aria-labelledby="list-title"><div class="row"><div><h2 id="list-title" style="font-size:17px;margin:0">登録商品 <span id="total">0</span>件</h2><p class="lead">商品の表示状態・通常価格・キャンペーン価格・在庫数を一覧から変更できます。</p></div><button id="refresh" type="button">最新データを取得</button></div>
+ <div class="filters"><div class="field"><label for="search">商品名・商品ID</label><input id="search" type="search" autocomplete="off" placeholder="商品名または商品ID"></div><div class="field"><label for="category">カテゴリ</label><select id="category"><option value="">すべて</option></select></div><div class="field"><label for="filter">表示状態</label><select id="filter"><option value="all">すべて</option><option value="visible">表示設定</option><option value="hidden">非表示設定</option><option value="pending">公開待ち・変更未反映</option><option value="reserved">予約商品あり</option></select></div></div>
+ <p class="summary" id="results" aria-live="polite">読み込み中…</p><div class="warning">変更内容は「この商品の変更を保存」で管理データに保存されます。<strong>購入者ページへの反映は別操作</strong>です。在庫の変更も公開するまで購入者側には反映されません。</div>
+ <div id="items"><div class="empty">登録商品を確認しています…</div></div></section>
+ <section class="card"><div class="row"><div><h2 style="font-size:16px;margin:0">お客様ページへの反映</h2><p class="lead" id="publish-hint">公開状態を確認しています…</p></div><a href="./products.html" style="padding:12px 14px;background:#163847;color:white;text-decoration:none;border-radius:9px;font-weight:700;font-size:13px">公開操作の画面へ →</a></div></section>
+ <p id="message" role="status" aria-live="polite" hidden class="status"></p>
+</div>
+<footer>© 2021–2026 Dobhar-chú</footer>
+</main>
+<script type="module" src="./catalog.js?asset=20261110-catalog-v1"></script>
+</body></html>

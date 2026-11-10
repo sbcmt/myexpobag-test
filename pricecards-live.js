@@ -7,6 +7,13 @@ const query=new URLSearchParams(location.search);
 const ids=new Set(String(query.get('ids')||'').split(',').filter(Boolean));
 let style=query.get('style')==='white'?'white':'accent';
 let lines=[],brandName='',brandSlug='';
+
+// Match the same 10 brand color presets used by settings.js and the storefront.
+const palette={natural:['#315746','フォレスト'],monotone:['#252932','モノトーン'],urban:['#274D82','ネイビー'],soft:['#A04C67','ローズ'],active:['#A9472B','テラコッタ'],lavender:['#765E9A','ラベンダー'],sand:['#806544','サンド'],peach:['#F38FB8','ピーチミルク'],mint:['#307C75','ミント'],slate:['#385773','スレートブルー']};
+function contrastInk(hex){const v=hex.replace('#',''),rgb=[0,2,4].map(n=>parseInt(v.slice(n,n+2),16)/255).map(x=>x<=.04045?x/12.92:Math.pow((x+.055)/1.055,2.4));return .2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2]>.179?'#1b2830':'#ffffff';}
+function setAccent(preset){const [main,label]=palette[preset]||palette.natural;document.documentElement.style.setProperty('--meb-pricecard-accent',main);document.documentElement.style.setProperty('--meb-pricecard-ink',contrastInk(main));$('brand-accent-dot').style.backgroundColor=main;$('brand-accent-label').textContent='アクセント：'+label+'（'+main+'）';}
+setAccent('natural');
+
 const out=$('paper-output');
 const yen=n=>'¥'+Math.round(Number(n)||0).toLocaleString('ja-JP');
 function showMessage(s){out.replaceChildren();$('pricecards-notice').textContent=s;}
@@ -88,11 +95,18 @@ else{
     const b=await getDoc(doc(db,'brands',user.uid));
     if(!b.exists()||b.data().ownerUid!==user.uid)throw Error('ブランド情報が見つかりません。');
     brandSlug=b.data().slug;brandName=b.data().displayName||brandSlug;
-    const [drafts,pub]=await Promise.all([getDocs(collection(db,'brands',user.uid,'products')),getDoc(doc(db,'publishedCatalogs',brandSlug))]);
-    const pubIds=new Set((pub.data()?.products||[]).map(p=>p.id));
+    const [drafts,pub,settingDoc]=await Promise.all([getDocs(collection(db,'brands',user.uid,'products')),getDoc(doc(db,'publishedCatalogs',brandSlug)),getDoc(doc(db,'brandSettings',brandSlug))]);
+    setAccent(settingDoc.data()?.theme?.preset||'natural');
+    const publicRecords=new Map((pub.data()?.products||[]).map(p=>[p.id,p]));
+    const priceMatches=(p,r)=>{
+      if(!r||p.active===false||p.name!==r.name||p.price!==r.price||(p.eventPrice??null)!==(r.eventPrice??null))return false;
+      const vars=p.variants||[],live=r.variants||[];
+      if(vars.length!==live.length)return false;
+      return vars.every(v=>{const other=live.find(x=>x.code===v.code);return !!other&&(v.price??null)===(other.price??null)&&(v.eventPrice??null)===(other.eventPrice??null);});
+    };
     const all=drafts.docs.map(s=>s.data()).filter(p=>p&&typeof p.id==='string'&&typeof p.name==='string');
     const selected=ids.size?all.filter(p=>ids.has(p.id)):all;
-    lines=selected.map(product=>({product,published:pubIds.has(product.id)}));
+    lines=selected.map(product=>({product,published:priceMatches(product,publicRecords.get(product.id))}));
     render();
     return;
    }catch(e){

@@ -78,7 +78,7 @@
 <div class="row"><button class="primary" id="publish-catalog" type="button">お客様ページに反映</button><a href="./index.html" id="public-customer-link" rel="noopener noreferrer" target="_blank">お客様ページを別タブで確認 ↗</a></div>
 <p aria-live="polite" class="status" hidden="" id="publish-status" role="status"></p></section>
 <p aria-live="polite" class="status" hidden="" id="status" role="status"></p>
-<section class="card product-catalog-overview" id="registered-products" aria-labelledby="registered-products-title">
+<section hidden class="card product-catalog-overview" id="registered-products" aria-labelledby="registered-products-title">
 <div class="toolbar"><div><h2 id="registered-products-title">登録済み商品 <span id="product-count">0</span>件</h2><p class="muted" style="margin:0">登録した商品を検索し、編集・公開状況を確認できます。</p></div><button id="refresh-products" type="button">一覧を更新</button></div>
 <div class="product-filters" aria-label="登録商品を絞り込む">
  <label class="field" for="product-filter-search"><span>商品名・商品ID</span><input type="search" id="product-filter-search" placeholder="商品名・商品IDで検索" autocomplete="off"/></label>
@@ -87,6 +87,7 @@
 </div>
 <div class="product-results-summary" id="product-results-summary" aria-live="polite">0件</div>
 <div class="product-list" id="product-list"><p class="muted">商品はまだ登録されていません。</p></div></section>
+<section class="card" aria-label="登録商品一覧ページへのリンク"><div class="toolbar" style="margin:0"><div><h2 style="margin:0 0 4px">登録済み商品の確認・簡易編集</h2><p class="muted" style="margin:0">表示・非表示、価格、在庫は専用の一覧ページでまとめて変更できます。</p></div><a href="./catalog.html" style="display:inline-block;padding:11px 14px;background:#163847;color:#fff;text-decoration:none;border-radius:9px;font-weight:700;font-size:13px">商品一覧を開く →</a></div></section>
 <section class="card"><div class="toolbar"><h2>カテゴリ設定</h2><span class="pill" id="category-count">0件</span></div>
 <div class="category-list" id="categories"></div>
 <form class="row" id="category-form"><input aria-label="追加するカテゴリ" id="new-category" maxlength="40" placeholder="例：ランタン、バッグ、雑貨" required="" style="flex:1;min-width:180px;padding:11px;border-radius:9px;border:1px solid #bbcbd5;font:inherit;font-size:14px"/><button class="primary" type="submit">カテゴリを追加</button></form>
@@ -200,6 +201,6 @@
   },15000);
 })();
 </script>
-<script onerror="window.MEB_PRODUCTS_STARTUP_ERROR?.()" src="./products.js?asset=20261110-ui-review3-v1" type="module"></script>
+<script onerror="window.MEB_PRODUCTS_STARTUP_ERROR?.()" src="./products.js?asset=20261110-catalog-link-v1" type="module"></script>
 <div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
 </body></html>

@@ -23,7 +23,7 @@
   .sheet{width:210mm;height:297mm;padding:7mm 12mm;display:grid;grid-template-columns:repeat(2,91mm);grid-template-rows:repeat(5,55mm);column-gap:4mm;row-gap:2mm;break-after:page;page-break-after:always}
   .sheet:last-child{break-after:auto;page-break-after:auto}
   .pricecard{width:91mm;height:55mm;border:.25mm solid #c9d3d8;position:relative;overflow:hidden;display:flex;background:#fff;break-inside:avoid}
-  .pricecard.unpublished::after{content:"未公開";position:absolute;top:0;right:0;padding:1.5mm 3mm;background:#ac2e35;color:#fff;font-size:8pt;font-weight:800;z-index:3}
+  .pricecard.unpublished::after{content:"未反映";position:absolute;top:0;right:0;padding:1.5mm 3mm;background:#ac2e35;color:#fff;font-size:8pt;font-weight:800;z-index:3}
   .qr-area{width:31mm;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3mm 2mm;gap:1mm}
   .qr-area img{width:25.5mm;height:25.5mm;image-rendering:pixelated}
   .scan-note{font-size:6pt;color:#65767c;white-space:nowrap;text-align:center}
@@ -44,11 +44,12 @@
   .variant-name{font-size:7pt;color:#364955;display:inline-flex;gap:.1mm;align-items:center;white-space:normal;overflow-wrap:anywhere;text-align:left;line-height:1.15}
   .variant-list.dense .variant-name{font-size:6.1pt}
   .variant-list.very-dense .variant-name{font-size:5.2pt}
-  .pricecard.accent{border-color:#afbec6}
+  .pricecard.accent{border-color:var(--meb-pricecard-accent,#315746)}
   .pricecard.accent .qr-area{border-right:none}
   .pricecard.accent .information{padding-top:9.7mm}
-  .pricecard.accent .brand{position:absolute;left:0;top:0;width:100%;padding:2mm 3mm;background:#12242f;color:#fff;letter-spacing:.06em}
+  .pricecard.accent .brand{position:absolute;left:0;top:0;width:100%;padding:2mm 3mm;background:var(--meb-pricecard-accent,#315746);color:var(--meb-pricecard-ink,#fff);letter-spacing:.06em}
   .pricecard.accent .scan-note{color:#58636a}
+  .pricecard.accent .now:not(.event){color:var(--meb-pricecard-accent,#315746)}
   .pricecard.accent .now.event{color:#bf3330}
   @page{size:A4 portrait;margin:0}
   @media print{body{background:white}.toolbar,.notice{display:none!important}.paper{margin:0;box-shadow:none;width:210mm;min-height:297mm}.sheet{page-break-after:always}.sheet:last-child{page-break-after:auto}}
@@ -63,11 +64,12 @@
 <a class="meb-admin-back" href="./admin.html">← 管理ページ</a>
 <div class="actions"><button id="white" type="button">ホワイト</button><button class="active" id="accent" type="button">アクセント</button><button id="print" type="button">印刷／PDF保存</button></div>
 </header>
+<div id="brand-accent-info" role="status" aria-live="polite" style="display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;background:#fff;padding:10px 15px;font-size:12px;color:#314756;border-bottom:1px solid #dae4e9"><span id="brand-accent-dot" aria-hidden="true" style="display:inline-block;width:20px;height:20px;border:1px solid #c5d0d5;border-radius:5px;background:#315746"></span><span id="brand-accent-label">ブランドカラーを読み込み中…</span><a href="./settings.html" style="color:#12637e">ブランドカラー設定へ</a></div>
 
 <p class="notice" id="pricecards-notice" role="status" aria-live="polite">商品情報を読み込み中…</p>
 <div id="paper-output"></div>
 <script src="./firebase-config.js"></script><script src="./qr.js"></script>
-<script src="./pricecards-live.js?asset=20261018-pricecard-loading-v122" type="module"></script>
+<script src="./pricecards-live.js?asset=20261110-brand-accent-v1" type="module"></script>
 <div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
 </body>
 </html>

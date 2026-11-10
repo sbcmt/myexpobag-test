@@ -9,6 +9,7 @@ const brandSetupUrl=new URL('./brand-setup.html',location.href).href;
 const maxProducts=300;
 let db,user=null,brand=null,products=new Map(),categories=[],importData=null,busy=false,brandSettingsExists=false,noveltyIds=new Set();
 let publishedProductsById=new Map(),publishedBundles=[],publishedCatalogAt=null,hasPublishedSnapshot=false,forcePending=false,publishedCategories=[];
+let publishedStockQuantities={},publishedVariantQuantities={};
 let pendingImages=[undefined,undefined],imageProcessing=false,imageTaskCount=0,imageRevision=0,imageSlotRevision=[0,0],imagesReady=[],imageKnown=new Set();
 const coll=()=>collection(db,'brands',user.uid,'products');
 const prodRef=id=>doc(db,'brands',user.uid,'products',id);
@@ -442,6 +443,21 @@ function normalizedPublicRecord(p){
 }
 function stableStringify(value){if(Array.isArray(value))return '['+value.map(stableStringify).join(',')+']';if(value&&typeof value==='object')return '{'+Object.keys(value).sort().map(k=>JSON.stringify(k)+':'+stableStringify(value[k])).join(',')+'}';return JSON.stringify(value);}
 function productPending(p){
+ // Sales update both the owner stock and publishedStock; manual inventory edits
+ // should remain pending until the owner explicitly publishes.
+ const equalStock=(a,b)=>(a??null)===(b??null);
+ if((p.variants||[]).length){
+  for(const v of p.variants){
+   const k=p.id+'::'+v.code;
+   if(Object.prototype.hasOwnProperty.call(publishedVariantQuantities,k)){
+    const qty=v.preorder===true?v.reservationStock:v.stock;
+    if(!equalStock(qty,publishedVariantQuantities[k]))return true;
+   }
+  }
+ }else if(Object.prototype.hasOwnProperty.call(publishedStockQuantities,p.id)){
+  const qty=p.preorder===true?p.reservationStock:p.stock;
+  if(!equalStock(qty,publishedStockQuantities[p.id]))return true;
+ }
  const published=publishedProductsById.get(p.id);
  if(p.active===false)return Boolean(published);
  if(!published)return true;
@@ -799,6 +815,7 @@ async function publishCatalog({automatic=false,allowBusy=false}={}){
   // Publishing stock from the latest private draft prevents stale client overwrites.
   // Read private stock values INSIDE a transaction. A concurrent QR sale
   // retries the publish instead of accidentally restoring deducted inventory.
+  let appliedStock=null;
   await runTransaction(db,async tx=>{
     const inventoryDocs=visible.map(productRecord=>prodRef(productRecord.id));
     const stocks=await Promise.all(inventoryDocs.map(ref=>tx.get(ref)));
@@ -815,7 +832,9 @@ async function publishCatalog({automatic=false,allowBusy=false}={}){
     tx.set(doc(db,'publishedStock',brand.slug),{
       brandId:user.uid,slug:brand.slug,quantities:next,variantQuantities,updatedAt:serverTimestamp()
     });
+    appliedStock={quantities:next,variantQuantities};
   });
+  if(appliedStock){publishedStockQuantities=appliedStock.quantities;publishedVariantQuantities=appliedStock.variantQuantities;}
   publishedProductsById=new Map(exposed.map(p=>[p.id,p]));publishedBundles=[...pairs.values()];publishedCategories=categoriesPublic.map(c=>c.name);publishedCatalogAt=Date.now();hasPublishedSnapshot=true;forcePending=false;render();
   message.textContent='公開しました：商品'+exposed.length+'件／商品画像'+uploaded.length+'枚。右のリンクからお客様ページを確認してください。';
   message.className='status';
@@ -829,7 +848,8 @@ async function publishCatalog({automatic=false,allowBusy=false}={}){
 }
 $('publish-catalog').addEventListener('click',()=>publishCatalog());
 async function refresh(){if(!user)return;try{
- const [catSnap,prodSnap,noveltySnap,publicSnap]=await Promise.all([getDoc(catRef()),getDocs(coll()),getDoc(brandSettingsRef()),getDocFromServer(doc(db,'publishedCatalogs',brand.slug))]);
+ const [catSnap,prodSnap,noveltySnap,publicSnap,pubStockSnap]=await Promise.all([getDoc(catRef()),getDocs(coll()),getDoc(brandSettingsRef()),getDocFromServer(doc(db,'publishedCatalogs',brand.slug)),getDocFromServer(doc(db,'publishedStock',brand.slug))]);
+ publishedStockQuantities=pubStockSnap.data()?.quantities||{};publishedVariantQuantities=pubStockSnap.data()?.variantQuantities||{};
  brandSettingsExists=noveltySnap.exists();
  const n=noveltySnap.data()?.novelty||{};
  categories=catSnap.exists()&&Array.isArray(catSnap.data().categories)?catSnap.data().categories.filter(x=>typeof x==='string'):[];
@@ -852,7 +872,7 @@ else try{
   if(!u){location.replace(loginUrl);return;}
   try{const snap=await getDoc(doc(db,'brands',u.uid));if(!snap.exists()){location.replace(brandSetupUrl);return;}
    const b=snap.data();if(b.ownerUid!==u.uid||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(b.slug))throw Error('brand mismatch');
-   user=u;brand=b;$('brand-label').textContent=b.displayName+'　｜　v1.0.1';const publicLink=new URL('./index.html',location.href);publicLink.searchParams.set('brand',b.slug);$('public-customer-link').href=publicLink.href;await refresh();$('loading').hidden=true;$('shell').hidden=false;document.documentElement.classList.remove('auth-pending');
+   user=u;brand=b;$('brand-label').textContent=b.displayName+'　｜　v1.0.1';const publicLink=new URL('./index.html',location.href);publicLink.searchParams.set('brand',b.slug);$('public-customer-link').href=publicLink.href;await refresh();$('loading').hidden=true;$('shell').hidden=false;document.documentElement.classList.remove('auth-pending');const requestedId=new URLSearchParams(location.search).get('edit');if(requestedId&&products.has(requestedId))editProduct(requestedId);
   }catch(err){console.error(err);$('loading').textContent='ブランド情報を読み込めません。Firestoreルールをご確認ください。';document.documentElement.classList.remove('auth-pending');}
  },()=>{$('loading').textContent='ログイン情報を確認できませんでした。';document.documentElement.classList.remove('auth-pending');});
 }catch(err){$('loading').textContent='Firebaseを読み込めませんでした。';document.documentElement.classList.remove('auth-pending');}
