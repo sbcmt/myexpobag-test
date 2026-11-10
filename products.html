@@ -106,11 +106,7 @@
 <thead><tr><th id="axis1-head">選択肢①</th><th id="axis2-head">選択肢②</th><th>商品コード（親＋_末尾）</th><th>価格（税込・円）</th><th>通常在庫</th><th>JAN（任意）</th><th>予約販売</th><th>操作</th></tr></thead>
 <tbody id="variant-rows"></tbody></table></div>
 <div class="row"><button type="button" id="add-variant">＋ 行を追加</button><span id="variant-entry-hint" class="muted" hidden>商品コードは「親商品ID_サブコード」で登録します。</span></div>
-<details style="margin-top:18px;border-top:1px solid #e1e9ec;padding-top:12px"><summary style="font-size:13px;font-weight:650;cursor:pointer">選択肢から複数の組合せを一括生成（任意）</summary>
-<p class="hint">各選択肢を改行またはカンマで区切って入力してください。生成後も表で個別修正できます。</p>
-<div class="axis-grid"><div class="field"><label for="axis1-values">選択肢①の一括入力</label><textarea id="axis1-values" placeholder="ブラック&#10;ホワイト"></textarea></div><div class="field"><label for="axis2-values">選択肢②の一括入力（任意）</label><textarea id="axis2-values" placeholder="S&#10;M&#10;L"></textarea></div></div>
-<div class="row"><button class="primary" id="generate-variants" type="button">組合せを自動生成</button><span class="muted" id="axis-preview">項目名と選択肢を入力してください。</span></div>
-</details>
+
 </section>
 <section class="product-tab-panel" id="panel-preorder" role="tabpanel" aria-labelledby="tab-preorder" hidden>
 <p class="tab-description">商品名・バリエーションを自動表示します。予約可否は基本情報・バリエーションのチェックと連動します。</p>
@@ -177,6 +173,6 @@
   },15000);
 })();
 </script>
-<script onerror="window.MEB_PRODUCTS_STARTUP_ERROR?.()" src="./products.js?asset=20261110-ui-6tabs-price-reserve-v3" type="module"></script>
+<script onerror="window.MEB_PRODUCTS_STARTUP_ERROR?.()" src="./products.js?asset=20261110-ui-6tabs-variant-manual-v4" type="module"></script>
 <div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
 </body></html>

@@ -317,31 +317,12 @@ function readVariants(id){
  }
  if(result.length>MAX_VARIANTS)throw Error('バリエーションは100件以内にしてください。');return result;
 }
-function axisInputValues(id){return trim($(id).value).split(/[、,，\n]+/).map(trim).filter(Boolean);}
 function axisSpec(){
  const rows=[...$('variant-rows').children];
- const ax1=[...new Set([...axisInputValues('axis1-values'),...rows.map(x=>trim(x.querySelector('.variant-axis1').value)).filter(Boolean)])];
- const ax2=[...new Set([...axisInputValues('axis2-values'),...rows.map(x=>trim(x.querySelector('.variant-axis2').value)).filter(Boolean)])];
+ const ax1=[...new Set(rows.map(x=>trim(x.querySelector('.variant-axis1').value)).filter(Boolean))];
+ const ax2=[...new Set(rows.map(x=>trim(x.querySelector('.variant-axis2').value)).filter(Boolean))];
  return {axis1Name:trim($('axis1-name').value),axis1Values:ax1,axis2Name:trim($('axis2-name').value),axis2Values:ax2};
 }
-function updateAxisPreview(){const a=axisSpec();$('axis-preview').textContent=a.axis1Values.length?'生成予定：'+a.axis1Values.length+' × '+(a.axis2Values.length||1)+' = '+a.axis1Values.length*(a.axis2Values.length||1)+'種類':'第1軸の項目・選択肢を入力してください。';}
-for(const id of ['axis1-name','axis1-values','axis2-name','axis2-values'])$(id).addEventListener('input',updateAxisPreview);
-$('generate-variants').addEventListener('click',()=>{
- const a=axisSpec();if(!a.axis1Name||!a.axis1Values.length||a.axis2Values.length&&!a.axis2Name){status('第1軸と、使用する場合は第2軸の項目名・選択肢を入力してください。',true);return;}
- if(new Set(a.axis1Values).size!==a.axis1Values.length||new Set(a.axis2Values).size!==a.axis2Values.length){status('同じ軸内で選択肢が重複しています。',true);return;}
- const total=a.axis1Values.length*(a.axis2Values.length||1);if(total>MAX_VARIANTS){status('組合せは100種類以内にしてください。',true);return;}
- const existing=[...$('variant-rows').children];if(existing.length&&!confirm('現在のバリエーション入力を新しい組合せで置き換えます。予約・在庫・JANが設定済みの行は、サブコードが一致する場合のみ引き継がれます。続けますか？'))return;
- reservationFromTable();const prior=new Map(existing.map(row=>[trim(row.querySelector('.variant-code').value).toUpperCase(),{
-  name:row.querySelector('.variant-name').value,price:row.querySelector('.variant-price').dataset.inherited==='1'?'':row.querySelector('.variant-price').value,eventPrice:row.querySelector('.variant-event-price').value,stock:row.querySelector('.variant-stock').value,janCode:row.querySelector('.variant-jan').value
- }]));
- const values=[];for(let i=0;i<a.axis1Values.length;i++)for(let j=0;j<(a.axis2Values.length||1);j++){
-  const code='V'+String(i+1).padStart(2,'0')+(a.axis2Values.length?'_'+String(j+1).padStart(2,'0'):'');
-  const axis1=a.axis1Values[i],axis2=a.axis2Values.length?a.axis2Values[j]:'';
-  const before=prior.get(code)||{};
-  values.push({code,name:axis2?axis1+' / '+axis2:axis1,axis1,axis2,price:before.price??'',eventPrice:before.eventPrice??'',stock:before.stock??'',janCode:before.janCode??''});
- }
- showVariants(values);status(total+'種類の組合せを生成しました。各バリエーションのJANと在庫を確認してください。');
-});
 $('add-variant').addEventListener('click',()=>{if($('variant-rows').children.length>=MAX_VARIANTS){status('バリエーションは100件以内にしてください。',true);return;}const el=variantRow();$('variant-rows').append(el);updateTotalStockField();updateVariantVisibility();toggleRelease();el.querySelector('.variant-axis1').focus();});
 const bulkYear=$('bulk-year'),bulkMonth=$('bulk-month');
 for(let y=new Date().getFullYear();y<=new Date().getFullYear()+20;y++){const option=document.createElement('option');option.value=String(y);option.textContent=y+'年';bulkYear.append(option);}
@@ -356,7 +337,7 @@ $('bulk-apply').addEventListener('click',()=>{
 });
 $('product-name').addEventListener('change',toggleRelease);
 $('variant-rows').addEventListener('input',updateJanState);
-showVariants();updateAxisPreview();
+showVariants();
 const MAX_COMBOS=3;
 function comboRow(values={}){
  const el=document.createElement('div');el.className='combo-entry';el.style.cssText='border-bottom:1px dashed #d7e2e8;padding:9px 0';
@@ -476,8 +457,7 @@ function editProduct(id){
  clearForm();$('product-id').value=p.id;$('product-id').readOnly=true;$('product-name').value=p.name;
  $('product-category').value=p.categoryName;$('product-price').value=p.price;$('product-event-price').value=p.eventPrice??'';
  const axes=p.variantAxes||{};
- for(const [name,value] of [['axis1-name',axes.axis1Name||''],['axis2-name',axes.axis2Name||''],['axis1-values',(axes.axis1Values||[]).join('\n')],['axis2-values',(axes.axis2Values||[]).join('\n')]])$(name).value=value;
- updateAxisPreview();
+ for(const [name,value] of [['axis1-name',axes.axis1Name||''],['axis2-name',axes.axis2Name||'']])$(name).value=value;
  reservationDrafts.clear();$('reservation-rows').replaceChildren();parentPreorderMode=(p.variants||[]).length?p.preorderAll===true:p.preorder===true;
  if((p.variants||[]).length){for(const v of p.variants){reservationDrafts.set(trim(v.code).startsWith(p.id+'_')?trim(v.code).slice(p.id.length+1):v.code,{preorder:v.preorder===true,releaseYear:v.releaseYear??p.releaseYear??'',releaseMonth:v.releaseMonth??p.releaseMonth??'',releasePeriod:v.releasePeriod||p.releasePeriod||'',reservationStock:v.reservationStock??v.stock??''});}}
  else reservationDrafts.set('__base__',{preorder:p.preorder===true,releaseYear:p.releaseYear??'',releaseMonth:p.releaseMonth??'',releasePeriod:p.releasePeriod||'',reservationStock:p.reservationStock??p.stock??''});
@@ -489,10 +469,10 @@ function editProduct(id){
 }
 function clearForm(){
  ++imageRevision;imageSlotRevision=[0,0];pendingImages=[undefined,undefined];imageTaskCount=0;imageProcessing=false;$('product-form').reset();totalAutoMode=false;manualTotalDraft='';reservationDrafts.clear();$('reservation-rows').replaceChildren();parentPreorderMode=false;$('product-preorder-all').checked=false;
- for(const id of ['axis1-name','axis2-name','axis1-values','axis2-values'])$(id).value='';
+ for(const id of ['axis1-name','axis2-name'])$(id).value='';
  showVariants();showCombos();$('product-id').readOnly=false;$('product-active').checked=true;$('product-novelty').checked=false;$('edit-note').textContent='新規登録';
  for(let slot=0;slot<2;slot++){imagePreview('',slot);$(imageId('product-image-hint',slot)).textContent='画像未登録。';$(imageId('product-image',slot)).value='';$(imageId('product-image-delete',slot)).checked=false;}
- selectProductTab('basic');updateAxisPreview();setBusy(busy);
+ selectProductTab('basic');setBusy(busy);
 }
 function toFirestore(p,original){return {...p,createdAt:original?.createdAt||serverTimestamp(),updatedAt:serverTimestamp()};}
 async function saveProduct(event){
