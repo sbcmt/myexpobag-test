@@ -1,4 +1,4 @@
-/** MY EXPO BAG TEST — subscription entitlement reader + plan badge.
+/** MY EXPO BAG TEST — Free/Pro/Tester entitlement reader + plan badge.
  * A browser cannot grant Pro: this file only READS a server-owned entitlement.
  * Stripe integration will later update planEntitlements/{uid} from a VERIFIED webhook.
  */
@@ -8,7 +8,8 @@
  let resolveReady;
  const readyPromise=new Promise(resolve=>{resolveReady=resolve;});
  const freeColors=['natural','monotone','urban','soft','active'];
- const isPro=()=>state.plan==='pro'&&state.verified;
+ const isPro=()=>state.verified && (state.plan==='pro' || state.plan==='tester');
+ const isTester=()=>state.verified && state.plan==='tester';
  const badge=()=>{
   if(!document.body)return;
   let el=document.getElementById('meb-plan-label');
@@ -28,6 +29,7 @@
  window.MEB_PLAN={
   ready:()=>readyPromise,
   isPro,
+  isTester,
   current:()=>({...state}),
   freeColors,
   requirePro:(feature)=>{if(isPro())return true;alert(`${feature}はPro.限定機能です。`);return false;}
@@ -48,8 +50,12 @@
      if(!user){state={plan:'free',status:'signed-out',verified:false};return;}
      const snap=await getDocFromServer(doc(db,'planEntitlements',user.uid));
      const ent=snap.exists()?snap.data():{};
-     const active=ent.plan==='pro'&&['active','trialing','tester'].includes(ent.status);
-     state={plan:active?'pro':'free',status:ent.status||'inactive',verified:true};
+     // Internal roles remain distinct, while tester uses the exact same Pro. UI.
+     // Continue accepting the previous 'pro' + 'tester' entitlement for compatibility.
+     const tester=(ent.plan==='tester' && ent.status==='active') ||
+       (ent.plan==='pro' && ent.status==='tester');
+     const activePro=ent.plan==='pro' && ['active','trialing'].includes(ent.status);
+     state={plan:tester?'tester':activePro?'pro':'free',status:ent.status||'inactive',verified:true};
     }catch(error){
      console.warn('[MY EXPO BAG] 権限を検証できません。Freeとして扱います。',error.code||error.message);
      state={plan:'free',status:'unverified',verified:false};
