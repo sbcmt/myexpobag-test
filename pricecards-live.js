@@ -5,7 +5,11 @@ import {getFirestore,doc,getDoc,collection,getDocs} from 'https://www.gstatic.co
 const $=id=>document.getElementById(id),cfg=window.MEB_FIREBASE_CONFIG||{};
 const query=new URLSearchParams(location.search);
 const ids=new Set(String(query.get('ids')||'').split(',').filter(Boolean));
-let style=query.get('style')==='white'?'white':'accent';
+// Free starts and stays on white. Pro/Tester may restore the requested accent style
+// only after its server-owned entitlement has been verified.
+let preferredStyle=query.get('style')==='white'?'white':'accent';
+let style='white';
+let planReady=false,priorPro=false;
 let lines=[],brandName='',brandSlug='';
 
 // Match the same 10 brand color presets used by settings.js and the storefront.
@@ -94,15 +98,40 @@ function cardFor({product,published}){
  }
  el.append(qr,info);return el;
 }
-function render(){out.replaceChildren();if(!lines.length){showMessage('該当する登録商品がありません。管理画面から選び直してください。');return;}
+function render(){out.replaceChildren();for(const t of ['white','accent'])$(t).classList.toggle('active',t===style);if(!lines.length){showMessage('該当する登録商品がありません。管理画面から選び直してください。');return;}
  for(let i=0;i<lines.length;i+=10){const paper=document.createElement('div');paper.className='paper';const sheet=document.createElement('div');sheet.className='sheet';lines.slice(i,i+10).forEach(x=>sheet.append(cardFor(x)));paper.append(sheet);out.append(paper);}
- for(const t of ['white','accent'])$(t).classList.toggle('active',t===style);
  const n=lines.filter(x=>!x.published).length;
  $('pricecards-notice').textContent=n?`⚠ 未公開のカードが${n}枚あります。商品を「お客様ページに反映」したあとに掲示してください。`:'登録済み商品IDごとに1枚のPRICE CARDです。印刷時はA4・倍率100%・余白なしを確認してください。';
 }
-for(const t of ['white','accent'])$(t).addEventListener('click',()=>{if(t==='accent'&&!window.MEB_PLAN?.requirePro('アクセントプライスカード'))return;style=t;render();});
-document.addEventListener('meb-plan-updated',()=>{if(!window.MEB_PLAN.isPro()&&style==='accent'){style='white';render();}const a=$('accent');if(a){a.disabled=!window.MEB_PLAN.isPro();a.title=window.MEB_PLAN.isPro()?'':'Pro.限定';}});
-$('print').addEventListener('click',()=>window.print());
+for(const t of ['white','accent'])$(t).addEventListener('click',()=>{
+ if(t==='accent'&&(!planReady||!window.MEB_PLAN?.isPro()))return;
+ preferredStyle=t;style=t;render();
+});
+function applyPlanToPricecards(){
+ const pro=planReady&&window.MEB_PLAN?.isPro()===true;
+ $('accent').hidden=!pro;
+ $('accent').disabled=!pro;
+ $('brand-accent-info').hidden=!pro;
+ if(pro&&!priorPro)style=preferredStyle;
+ if(!pro)style='white';
+ priorPro=pro;
+ // Do not replace the loading message before the first catalog fetch finishes.
+ if(lines.length)render();
+ else for(const t of ['white','accent'])$(t).classList.toggle('active',t===style);
+}
+// No Pro-only controls are rendered before entitlement verification finishes.
+$('print').disabled=true;
+window.MEB_PLAN?.ready().then(()=>{
+ planReady=true;
+ $('print').disabled=false;
+ applyPlanToPricecards();
+}).catch(()=>{
+ planReady=true;
+ $('print').disabled=false;
+ applyPlanToPricecards();
+});
+document.addEventListener('meb-plan-updated',()=>{if(planReady)applyPlanToPricecards();});
+$('print').addEventListener('click',()=>{if(!planReady)return;window.print();});
 if(!['apiKey','authDomain','projectId','appId'].every(k=>typeof cfg[k]==='string'&&cfg[k]))showMessage('Firebase設定を確認してください。');
 else{
  const app=getApps().length?getApp():initializeApp(cfg),db=getFirestore(app);

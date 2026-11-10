@@ -57,21 +57,22 @@
   @media print{body{background:white}.toolbar,.notice{display:none!important}.paper{margin:0;box-shadow:none;width:210mm;min-height:297mm}.sheet{page-break-after:always}.sheet:last-child{page-break-after:auto}}
   @media screen and (max-width:850px){.paper{transform-origin:top left;transform:scale(.6);margin:10px 0 -100mm 2vw}}
   @media screen and (max-width:480px){.paper{transform:scale(.43);margin-bottom:-166mm}}
+  [hidden]{display:none!important}
 </style>
 <style id="meb-copyright-style">.meb-copyright{box-sizing:border-box;display:block;margin:16px auto 24px;padding:10px 14px;text-align:center;color:#8c98a0;font:11px/1.7 -apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;letter-spacing:.025em}@media print{.meb-copyright{display:none!important}}</style><link rel="stylesheet" href="./admin-navigation.css?v=20261016-v114"/>
-<script src="./meb-plan.js?v=20261110-three-roles-2" defer></script></head>
+<script src="./meb-plan.js?v=20261110-free-threecolors-3" defer></script></head>
 <body>
 <header class="toolbar meb-admin-page-header meb-admin-page-header--pricecards">
 <div class="meb-admin-page-title"><h1>MY EXPO BAG｜プライスカード</h1></div>
 <a class="meb-admin-back" href="./admin.html">← 管理ページ</a>
-<div class="actions"><button id="white" type="button">ホワイト</button><button class="active" id="accent" type="button">アクセント</button><button id="print" type="button">印刷／PDF保存</button></div>
+<div class="actions"><button id="white" type="button">ホワイト</button><button hidden id="accent" type="button">アクセント</button><button id="print" type="button">印刷／PDF保存</button></div>
 </header>
-<div id="brand-accent-info" role="status" aria-live="polite" style="display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;background:#fff;padding:10px 15px;font-size:12px;color:#314756;border-bottom:1px solid #dae4e9"><span id="brand-accent-dot" aria-hidden="true" style="display:inline-block;width:20px;height:20px;border:1px solid #c5d0d5;border-radius:5px;background:#315746"></span><span id="brand-accent-label">ブランドカラーを読み込み中…</span><a href="./settings.html" style="color:#12637e">ブランドカラー設定へ</a></div>
+<div hidden id="brand-accent-info" role="status" aria-live="polite" style="display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;background:#fff;padding:10px 15px;font-size:12px;color:#314756;border-bottom:1px solid #dae4e9"><span id="brand-accent-dot" aria-hidden="true" style="display:inline-block;width:20px;height:20px;border:1px solid #c5d0d5;border-radius:5px;background:#315746"></span><span id="brand-accent-label">ブランドカラーを読み込み中…</span><a href="./settings.html" style="color:#12637e">ブランドカラー設定へ</a></div>
 
 <p class="notice" id="pricecards-notice" role="status" aria-live="polite">商品情報を読み込み中…</p>
 <div id="paper-output"></div>
 <script src="./firebase-config.js"></script><script src="./qr.js"></script>
-<script src="./pricecards-live.js?v=20261110-plan1" type="module"></script>
+<script src="./pricecards-live.js?v=20261110-free-hide-accent-3" type="module"></script>
 <div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
 </body>
 </html>

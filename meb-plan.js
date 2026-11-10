@@ -7,7 +7,7 @@
  let state={plan:'free',status:'inactive',verified:false};
  let resolveReady;
  const readyPromise=new Promise(resolve=>{resolveReady=resolve;});
- const freeColors=['natural','monotone','urban','soft','active'];
+ const freeColors=['monotone','urban','active'];
  const isPro=()=>state.verified && (state.plan==='pro' || state.plan==='tester');
  const isTester=()=>state.verified && state.plan==='tester';
  const badge=()=>{

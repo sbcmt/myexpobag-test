@@ -112,10 +112,25 @@ else{
     const n=d.novelty||{};$('novelty-enabled').checked=!!n.mode&&n.mode!=='none';setRadio('novelty-mode',n.mode==='none'?'all':n.mode||'all');$('novelty-name').value=n.name||'';$('novelty-minimum').value=n.minSpend||'';renderNoveltyProducts(noveltyProductEntries,Array.isArray(n.productIds)?n.productIds:(n.productId?[n.productId]:[]));updateNoveltyStatus(n);
    }else{$('handoff-expiry').value='5';renderNoveltyProducts(noveltyProductEntries,noveltyProductEntries.filter(p=>p.noveltyTarget===true).map(p=>p.id));updateNoveltyStatus({mode:'none'});}
    await window.MEB_PLAN?.ready();
-   if(!window.MEB_PLAN?.isPro()){
-    for(const b of document.querySelectorAll('#swatches button')){if(!window.MEB_PLAN.freeColors.includes(b.dataset.preset)){b.disabled=true;b.title='Pro.限定カラー';}}
-    const novelty=$('novelty-enabled');novelty.disabled=true;novelty.checked=false;for(const el of document.querySelectorAll('#novelty-fields input,#novelty-fields select,#novelty-fields button'))el.disabled=true;
-    if(!window.MEB_PLAN.freeColors.includes(preset))preset='natural';
+   // Only the 3 expressly available colors are visible in Free.
+   // Tester has the same options as Pro. (10 colors).
+   const entitledPro=window.MEB_PLAN?.isPro()===true;
+   const freeColors=window.MEB_PLAN?.freeColors||['monotone','urban','active'];
+   for(const b of document.querySelectorAll('#swatches button')){
+    const allowed=entitledPro||freeColors.includes(b.dataset.preset);
+    b.hidden=!allowed;
+    b.disabled=!allowed;
+    b.title='';
+   }
+   if(!entitledPro){
+    const novelty=$('novelty-enabled');novelty.disabled=true;novelty.checked=false;
+    for(const el of document.querySelectorAll('#novelty-fields input,#novelty-fields select,#novelty-fields button'))el.disabled=true;
+    // Old Pro-only preset may be saved in Firestore; do not display it as a Free choice.
+    // The user can save an allowed color (monotone is the fallback) as the new setting.
+    if(!freeColors.includes(preset)){
+     preset='monotone';
+     status('Free版ではモノトーン・ネイビー・テラコッタから選択してください。保存すると選択色が反映されます。');
+    }
    }
    previewTheme();previewBanner();fields();bannerFields();$('loading').hidden=true;$('shell').hidden=false;$('save').disabled=false;
   }catch(err){console.error(err);$('loading').textContent='設定情報を読み込めませんでした。通信環境とFirestoreルールをご確認ください。';}
