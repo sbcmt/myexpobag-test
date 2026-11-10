@@ -11,14 +11,16 @@
  */
 (function () {
   'use strict';
-  const config = {
-    apiKey: 'TEST_API_KEY_HERE',
-    authDomain: 'TEST_PROJECT_ID_HERE.firebaseapp.com',
-    projectId: 'TEST_PROJECT_ID_HERE',
-    storageBucket: 'TEST_PROJECT_ID_HERE.firebasestorage.app',
-    messagingSenderId: 'TEST_SENDER_ID_HERE',
-    appId: 'TEST_WEB_APP_ID_HERE'
-  };
+  
+const config = {
+  apiKey: 'AIzaSyBjegs2WBFIN_Lat1zXnSSMDCxk-c9SoJU',
+  authDomain: 'my-expo-bag-test.firebaseapp.com',
+  projectId: 'my-expo-bag-test',
+  storageBucket: 'my-expo-bag-test.firebasestorage.app',
+  messagingSenderId: '5179622848',
+  appId: '1:5179622848:web:ec3efac8cbb9fabdd67425'
+};
+
 
   const valid =
     config.apiKey.length > 15 && !config.apiKey.startsWith('TEST_') &&
