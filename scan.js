@@ -118,6 +118,8 @@ function calculate(parsed,catalog,settings={}){
    hasPreorder,shippingFee,shippingMode:shipMode,shippingThreshold:shipThreshold,shippingCharge:shipCharge,shippingPrefecture,
    noveltyMode,noveltyName:noveltyMode==='none'?'':String(n.name||''),noveltyMinSpend:Number.isInteger(n.minSpend)?n.minSpend:0,noveltyProductId:noveltyMode==='product'?String(n.productId||''):''};
 }
+const privateAvailable=p=>p?.preorder===true?p.reservationStock:p?.stock;
+const variantAvailable=v=>v?.preorder===true?v.reservationStock:v?.stock;
 function checkStock(parsed,stock,privateMap=null){
  const quantities=stock.quantities||{};
  const variantQuantities=stock.variantQuantities||{};
@@ -128,7 +130,7 @@ function checkStock(parsed,stock,privateMap=null){
   const hasVariants=Array.isArray(p?.variants)&&p.variants.length>0;
   if(!hasVariants&&quantities[id]!==null&&(!Number.isInteger(quantities[id])||quantities[id]<qty))throw Error('在庫が不足しています：'+id+'（必要 '+qty+'点）');
   if(privateMap){
-   if(!hasVariants&&p.stock!==null&&(!Number.isInteger(p.stock)||p.stock<qty))throw Error('在庫が不足しています（管理側）：'+id);
+   if(!hasVariants&&privateAvailable(p)!==null&&privateAvailable(p)!==undefined&&(!Number.isInteger(privateAvailable(p))||privateAvailable(p)<qty))throw Error('在庫が不足しています（管理側）：'+id);
   }
  }
  for(const item of parsed.items){
@@ -137,11 +139,11 @@ function checkStock(parsed,stock,privateMap=null){
   const privateVariant=privateProduct?.variants?.find(v=>v.code===item.variant);
   if(privateProduct&&!privateVariant)throw Error('登録されていないバリエーションです：'+item.id+'_'+item.variant);
   const key=item.key;
-  if(privateVariant && Number.isInteger(privateVariant.stock) && !(key in variantQuantities))
+  if(privateVariant && Number.isInteger(variantAvailable(privateVariant)) && !(key in variantQuantities))
    throw Error('カラー別在庫が未公開です。管理画面から商品を再公開してください：'+key);
   const qty=variantQuantities[key]??null;
   if(qty!==null&&(!Number.isInteger(qty)||qty<item.qty))throw Error('このバリエーションは在庫不足です：'+item.id+'_'+item.variant);
-  if(Number.isInteger(privateVariant?.stock)&&privateVariant.stock<item.qty)throw Error('このバリエーションは在庫不足（管理側）です：'+key);
+  if(Number.isInteger(variantAvailable(privateVariant))&&variantAvailable(privateVariant)<item.qty)throw Error('このバリエーションは在庫不足（管理側）です：'+key);
  }
 }
 // All prices are frozen at first reservation. Subsequent cancellations recalculate
@@ -288,12 +290,12 @@ async function reserveAtScan(parsed,quote){
     const v=newVariants.find(x=>x.code===item.variant);
     if(!v)throw Error('バリエーション情報が一致しません。');
     if(Number.isInteger(newVariantQuantities[item.key]))newVariantQuantities[item.key]-=item.qty;
-    if(Number.isInteger(v.stock)){v.stock-=item.qty;variantChanged=true;}
+    const field=v.preorder===true?'reservationStock':'stock';if(Number.isInteger(v[field])){v[field]-=item.qty;variantChanged=true;}
    }
-   if(Number.isInteger(privateProduct.stock)||variantChanged){
+   if(Number.isInteger(privateAvailable(privateProduct))||variantChanged){
     const update={updatedAt:serverTimestamp()};
     if((privateProduct.variants||[]).length)update.stock=null;
-    else if(Number.isInteger(privateProduct.stock))update.stock=privateProduct.stock-qty;
+    else if(Number.isInteger(privateAvailable(privateProduct)))update[privateProduct.preorder===true?'reservationStock':'stock']=privateAvailable(privateProduct)-qty;
     if(variantChanged)update.variants=newVariants;
     tx.update(productRefs[ids.indexOf(id)],update);
    }
@@ -381,12 +383,12 @@ async function cancelLine(key,all=false){
      }
      const variant=revised.find(v=>v.code===line.variant);
      if(!variant)throw Error('元のバリエーションが見つかりません：'+key);
-     if(Number.isInteger(variant.stock)){variant.stock+=line.qty;variantChanged=true;}
+     const field=line.preorder===true?'reservationStock':'stock';if(Number.isInteger(variant[field])){variant[field]+=line.qty;variantChanged=true;}
     }
-    if(Number.isInteger(priv.stock)||variantChanged){
+    if(Number.isInteger(privateAvailable(priv))||variantChanged){
      const update={updatedAt:serverTimestamp()};
      if((priv.variants||[]).length)update.stock=null;
-     else if(Number.isInteger(priv.stock)){if(priv.stock+qty>100000000)throw Error('商品在庫が上限を超えます');update.stock=priv.stock+qty;}
+     else if(Number.isInteger(privateAvailable(priv))){const field=priv.preorder===true?'reservationStock':'stock';if(priv[field]+qty>100000000)throw Error('商品在庫が上限を超えます');update[field]=priv[field]+qty;}
      if(variantChanged)update.variants=revised;
      tx.update(productRefs[i],update);
     }

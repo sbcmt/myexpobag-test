@@ -75,19 +75,15 @@ window.MEB_LOAD_CUSTOMER_BRAND = async function loadBrand(rawSlug) {
     variants:Array.isArray(p.variants)?p.variants:[]})):[];
   const allowedImages=new Set(Array.isArray(catalog?.publishedImageIds)?catalog.publishedImageIds:[]);
   const imagePromises=new Map();
-  window.MEB_LOAD_PUBLIC_IMAGE=(productId)=>{
-    if(!allowedImages.has(productId))return Promise.resolve('');
-    if(!imagePromises.has(productId)){
-      const promise=getDoc(doc(db,'publishedCatalogs',slug,'images',productId))
-        .then(s=>{
-          const data=s.exists()?s.data().imageData:'';
-          return typeof data==='string' && data.length<=109200 &&
-            /^data:image\/(?:jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(data)?data:'';
-        }).catch(error=>{console.warn('商品画像の読み込みに失敗',productId,error);return '';});
-      imagePromises.set(productId,promise);
-    }
+  const validImage=data=>typeof data==='string'&&data.length<=109200&&/^data:image\/(?:jpeg|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(data);
+  function loadImageRecord(productId){
+    if(!allowedImages.has(productId))return Promise.resolve(null);
+    if(!imagePromises.has(productId))imagePromises.set(productId,getDoc(doc(db,'publishedCatalogs',slug,'images',productId))
+      .then(s=>s.exists()?s.data():null).catch(error=>{console.warn('商品画像の読み込みに失敗',productId,error);return null;}));
     return imagePromises.get(productId);
-  };
+  }
+  window.MEB_LOAD_PUBLIC_IMAGE=productId=>loadImageRecord(productId).then(data=>validImage(data?.imageData)?data.imageData:'');
+  window.MEB_LOAD_PUBLIC_IMAGE2=productId=>loadImageRecord(productId).then(data=>validImage(data?.imageData2)?data.imageData2:'');
   // Only the holder of a high-entropy purchase QR can look up the exact
   // order's public acknowledgement. No customer PII or purchased item list is published.
   // Firestore rules forbid listing orders and allow only exact document reads.

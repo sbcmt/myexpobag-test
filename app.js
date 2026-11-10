@@ -58,7 +58,12 @@
   };
   const isPreorder=(p,code='')=>{const v=selectedVariant(p,code);return typeof v?.preorder==='boolean'?v.preorder:p.preorder===true;};
   const hasAnyPreorder=p=>variantsOf(p).length?variantsOf(p).some(v=>isPreorder(p,v.code)):isPreorder(p);
-  const releaseText=p=>p.releaseMonth&&['上旬','中旬','下旬'].includes(p.releasePeriod)?`${p.releaseMonth}月${p.releasePeriod}予定`:'';
+  const releaseText=(p,code='')=>{
+    const v=selectedVariant(p,code),item=v?.preorder===true?v:p;
+    const month=item.releaseMonth,period=item.releasePeriod,year=item.releaseYear;
+    return month&&['上旬','中旬','下旬'].includes(period)?`${year?year+'年':''}${month}月${period}予定`:'';
+  };
+  const firstReservationText=p=>{const row=variantsOf(p).find(v=>isPreorder(p,v.code));return row?releaseText(p,row.code):releaseText(p);};
   const imageTag=(p,attr='')=>`<img src="${esc(fileSafe(p.image))}" data-meb-product-image="${esc(p.id)}" alt="${esc(p.name)}" ${attr}/>`;
   const imageCache=new Map();let imageObserver=null;
   function hydrateProductPhotos(){
@@ -69,6 +74,11 @@
     const apply=(id,uri)=>{if(!uri)return;for(const el of document.querySelectorAll('img[data-meb-product-image]')){
       if(el.dataset.mebProductImage===id)el.src=uri;
     }};
+    const secondFetcher=window.MEB_LOAD_PUBLIC_IMAGE2;
+    if(typeof secondFetcher==='function')for(const img of document.querySelectorAll('img[data-meb-product-image2]')){
+      const id=img.dataset.mebProductImage2;
+      secondFetcher(id).then(uri=>{if(uri&&img.isConnected)img.src=uri;}).catch(error=>console.warn('サブ画像取得失敗',error));
+    }
     const load=img=>{
       const id=img.dataset.mebProductImage;
       if(imageCache.has(id)){const entry=imageCache.get(id);if(typeof entry==='string')apply(id,entry);return;}
@@ -235,7 +245,7 @@
           ${fromPrice(p)<p.price?`<span class="price-original">${yen(p.price)}</span>`:''}
           <div class="price-current">${yen(fromPrice(p))}${variantsOf(p).length?'〜':''}</div>
         </div><button class="add-small" data-add="${esc(p.id)}" ${soldOut(p)?'disabled':''} aria-label="${esc(p.name)}をBAGに追加">${ICONS.plus}</button></div>
-        ${hasAnyPreorder(p)?`<div class="price-extra">受注予約あり・${esc(releaseText(p))}</div>`:fromPrice(p)<p.price?'<div class="price-extra">展示会限定価格</div>':''}
+        ${hasAnyPreorder(p)?`<div class="price-extra">受注予約あり・${esc(firstReservationText(p))}</div>`:fromPrice(p)<p.price?'<div class="price-extra">展示会限定価格</div>':''}
       </div>
     </article>`;
   const nav = target => { if(location.hash!==target) location.hash=target; else render(); window.scrollTo({top:0,behavior:'instant'}); };
@@ -306,11 +316,11 @@
     const category=(cfg.categories.find(c=>c.id===p.categoryId)||{}).name||'未分類';
     $('#view').innerHTML=`<div class="page-body"><button class="back-button" data-nav="#home">${ICONS.left} 商品一覧に戻る</button>
       <div class="detail-cover">${imageTag(p)}</div>
-      ${p.image2&&fileSafe(p.image2)?`<div class="detail-second"><img src="${esc(fileSafe(p.image2))}" alt="${esc(p.name)} サブ画像" loading="lazy"/></div>`:''}
+      ${p.imageCount>=2?`<div class="detail-second"><img data-meb-product-image2="${esc(p.id)}" src="./assets/product-placeholder.svg" alt="${esc(p.name)} サブ画像" loading="lazy"/></div>`:''}
       <div class="detail-en">${esc(category)}　／　商品ID：${esc(p.id)}</div>
       <h1 class="detail-name">${esc(p.name)}${giftTag(p)}</h1>
       <div class="detail-price">${unitPrice(p,color)<normalPrice(p,color)?`<span class="detail-original">${yen(normalPrice(p,color))}</span>`:''}${yen(unitPrice(p,color))} <span style="font-size:11px;font-weight:500">税込</span></div>
-      ${soldOut(p)||variants.length&&color&&variantStock(p,color)===0?'<div class="price-extra" style="color:#c02d30;font-weight:800">SOLD OUT</div>':isPreorder(p,color)?`<div class="price-extra">受注予約・${esc(releaseText(p))}</div>`:unitPrice(p,color)<normalPrice(p,color)?'<div class="price-extra">展示会限定価格</div>':''}
+      ${soldOut(p)||variants.length&&color&&variantStock(p,color)===0?'<div class="price-extra" style="color:#c02d30;font-weight:800">SOLD OUT</div>':isPreorder(p,color)?`<div class="price-extra">受注予約・${esc(releaseText(p,color))}</div>`:unitPrice(p,color)<normalPrice(p,color)?'<div class="price-extra">展示会限定価格</div>':''}
       ${isPreorder(p,color)?shippingSelector('detail')+(cfg.shipping?.mode==='prefecture'&&state.shippingPrefecture?`<p class="shipping-detail-fee">${esc(state.shippingPrefecture)}への送料：${(()=>{const base=preorderLines().length?totalCalc(false).beforeAppDiscount:totalCalc(false).beforeAppDiscount+unitPrice(p,color);const amt=window.MEB_SHIPPING.calc(cfg.shipping,base,true,state.shippingPrefecture);return amt===0?'送料当社負担':yen(amt);})()} <span>（現時点の目安。MY BAGで確定）</span></p>`:''):''}
       ${variants.length?`<section class="variants"><p class="variant-label">バリエーションを選択 <span>（必須）</span></p><div class="variant-options">${variants.map(v=>`<button type="button" class="variant-chip ${v.code===color?'selected':''}" data-product="${esc(p.id)}" data-variant="${esc(v.code)}" aria-pressed="${v.code===color}" ${v.stock===0?'disabled':''}>${esc(v.name)}${v.stock===0?'（SOLD OUT）':''}</button>`).join('')}</div></section>`:''}
       <button class="primary-btn" data-add="${esc(p.id)}" data-go-bag="true" ${soldOut(p)||variants.length&&color&&variantStock(p,color)===0?'disabled':''}>${soldOut(p)||variants.length&&color&&variantStock(p,color)===0?'SOLD OUT':'＋　MY BAGに追加する'}</button>
