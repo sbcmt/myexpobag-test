@@ -209,21 +209,15 @@ function refsInPublic(snapshot,ids){
   (data.publishedImageIds||[]).some(id=>ids.has(id))||
   (data.bundles||[]).some(b=>(b.productIds||[]).some(id=>ids.has(id)));
 }
-function confirmDeleteDialog(){
- return new Promise(resolve=>{
-  const dialog=$('confirm-delete-dialog');
-  dialog.returnValue='cancel';
-  dialog.addEventListener('close',()=>resolve(dialog.returnValue==='delete'),{once:true});
-  dialog.showModal();
- });
-}
 async function deleteSelected(){
  if(busy||!user||!brand)return;
  const ids=[...selectedProductIds].sort();if(!ids.length)return;
  if(ids.length>50){message('一度に削除できる商品は50件までです。選択数を減らしてください。',true);return;}
  const selected=ids.map(id=>products.find(p=>p.id===id));
  if(selected.some(p=>!p)){message('商品一覧が変更されました。最新データを取得してください。',true);return;}
- if(!(await confirmDeleteDialog()))return;
+ const details=selected.map(p=>'・'+p.name+'［'+p.id+'］').join('\n');
+ if(!confirm('以下の'+ids.length+'商品をFirestoreから完全削除します。画像データも削除し、元に戻せません。\n\n'+details+'\n\n※注文履歴は残します。\n続行しますか？'))return;
+ if(prompt('誤削除を防ぐため「削除」と入力してください。')!=='削除')return;
  busy=true;message('削除前の安全確認をしています…');updateDeleteSelection();
  try{
   // Verify *server* state, not stale client cache. No product may still be public.
@@ -236,64 +230,54 @@ async function deleteSelected(){
   if(refsInPublic(publicSnap,new Set(ids)))throw Error('購入者ページに掲載中の商品が含まれています。該当商品を「非表示」にして「お客様ページに反映」を完了してから削除してください。');
   const rows=drafts.docs.map(d=>({id:d.id,...d.data()}));
   for(const id of ids){if(!rows.some(p=>p.id===id))throw Error('商品「'+id+'」が既に削除されています。最新データを取得してください。');}
-  // Keep products that refer to deleted products, but clear only the stale combination links.
-  const cross=rows.filter(p=>!ids.includes(p.id)&&comboReferences(p,new Set(ids)));
+  const cross=rows.filter(p=>comboReferences(p,new Set(ids)));
+  if(cross.length)throw Error('商品（'+cross.map(p=>p.name).join('、')+'）が削除対象の商品を組合せ販売で参照しています。先に組合せを解除してください。');
   const active=orderSnap.docs.find(d=>ids.some(id=>idInOrder(d.data(),id)));
   if(active)throw Error('未処理の注文がある商品は削除できません。受注確認で受渡し・取消を完了してください。');
   const currentSettings=settingsSnap.exists()?settingsSnap.data():null;
   if(currentSettings?.banner?.linkMode==='product'&&ids.includes(currentSettings.banner.linkValue))throw Error('ブランド設定のバナーリンク先に指定されています。先にバナーのリンク先を変更してください。');
   const refs=ids.map(id=>doc(db,'brands',user.uid,'products',id));
-  const crossRefs=cross.map(p=>doc(db,'brands',user.uid,'products',p.id));
+  const quotaRef=doc(db,'brands',user.uid,'productQuota','state');
   const catalogRef=doc(db,'publishedCatalogs',brand.slug),stockRef=doc(db,'publishedStock',brand.slug),settingsRef=doc(db,'brandSettings',brand.slug);
-  await runTransaction(db,async tx=>{
-   // All transaction reads come before writes. Validate current server version,
-   // publication and brand references again before removing any document.
-   const [pub,stock,settings,...allProductSnapshots]=await Promise.all([
-    tx.get(catalogRef),tx.get(stockRef),tx.get(settingsRef),...refs.map(ref=>tx.get(ref)),...crossRefs.map(ref=>tx.get(ref))
-   ]);
-   const snapshotProducts=allProductSnapshots.slice(0,refs.length);
-   const crossSnapshots=allProductSnapshots.slice(refs.length);
-   if(refsInPublic(pub,new Set(ids)))throw Error('公開データが更新されました。最新状態で非表示を反映してください。');
-   for(let i=0;i<ids.length;i++){
-    if(!snapshotProducts[i].exists())throw Error('商品が既に削除されています。');
-    const live=snapshotProducts[i].data(),expected=selected[i];
-    if(live.updatedAt?.isEqual&&expected.updatedAt?.isEqual&&!live.updatedAt.isEqual(expected.updatedAt))throw Error('商品「'+ids[i]+'」は別の操作で更新されています。一覧を再取得してください。');
-   }
-   if(settings.exists()&&settings.data().banner?.linkMode==='product'&&ids.includes(settings.data().banner.linkValue))throw Error('バナーの参照先を変更してから削除してください。');
-   // Clear references from remaining draft products atomically with the deletion.
-   for(let i=0;i<cross.length;i++){
-    const snap=crossSnapshots[i];
-    if(!snap.exists())throw Error('組合せ元の商品が更新されています。最新の一覧を取得してください。');
-    const live=snap.data(),original=cross[i];
-    if(live.updatedAt?.isEqual&&original.updatedAt?.isEqual&&!live.updatedAt.isEqual(original.updatedAt))throw Error('組合せ元の商品が変更されました。最新データを取得してください。');
-    const oldCombos=Array.isArray(live.combos)?live.combos:(live.comboProductId?[{productId:live.comboProductId,discount:live.comboDiscount||0}]:[]);
-    const remaining=oldCombos.filter(entry=>!ids.includes(entry.productId));
-    if(remaining.length!==oldCombos.length)tx.update(crossRefs[i],{
-     combos:remaining,comboProductId:remaining[0]?.productId||'',comboDiscount:remaining[0]?.discount||0,updatedAt:serverTimestamp()
-    });
-   }
-   for(let i=0;i<ids.length;i++){
-    const id=ids[i];tx.delete(refs[i]);
+  let removed=0;
+  // Each deletion and its quota decrement must be one atomic transaction.
+  // The overall selection is processed sequentially so no single request
+  // exceeds Firestore security-rules document access limits.
+  for(let i=0;i<ids.length;i++){
+   const id=ids[i],ref=refs[i];
+   await runTransaction(db,async tx=>{
+    // Always read before writes; re-check server state to avoid stale deletes.
+    const [pub,stock,settings,item,quota]=await Promise.all([
+     tx.get(catalogRef),tx.get(stockRef),tx.get(settingsRef),tx.get(ref),tx.get(quotaRef)
+    ]);
+    if(refsInPublic(pub,new Set([id])))throw Error('商品「'+id+'」が公開中です。非表示にして公開情報を更新してください。');
+    if(!item.exists())throw Error('商品「'+id+'」が既に削除されています。');
+    if(!quota.exists()||!Number.isInteger(quota.data().count)||quota.data().count<=0)throw Error('商品件数管理に不整合があります。削除を中止しました。');
+    const live=item.data(),expected=selected[i];
+    if(live.updatedAt?.isEqual&&expected.updatedAt?.isEqual&&!live.updatedAt.isEqual(expected.updatedAt))throw Error('商品「'+id+'」は別の操作で更新されています。一覧を再取得してください。');
+    if(settings.exists()&&settings.data().banner?.linkMode==='product'&&settings.data().banner.linkValue===id)throw Error('商品「'+id+'」がバナーから参照されています。');
+    tx.delete(ref);
+    tx.update(quotaRef,{count:quota.data().count-1,lastProductId:id,action:'delete',updatedAt:serverTimestamp()});
     tx.delete(doc(db,'brands',user.uid,'productImages',id));
-    // Remove a possible orphan public photo left by a previous publication.
     tx.delete(doc(db,'publishedCatalogs',brand.slug,'images',id));
-   }
-   if(stock.exists()){
-    const old=stock.data();const quantities={...(old.quantities||{})},variantQuantities={...(old.variantQuantities||{})};
-    for(const id of ids){delete quantities[id];for(const key of Object.keys(variantQuantities))if(key.startsWith(id+'::'))delete variantQuantities[key];}
-    tx.update(stockRef,{quantities,variantQuantities,updatedAt:serverTimestamp()});
-   }
-   if(settings.exists()){
-    const d=settings.data(),n=d.novelty||{},oldIds=Array.isArray(n.productIds)?n.productIds:(n.productId?[n.productId]:[]),nextIds=oldIds.filter(id=>!ids.includes(id));
-    if(nextIds.length!==oldIds.length||ids.includes(n.productId)){
-     tx.update(settingsRef,{novelty:{...n,productIds:nextIds,productId:nextIds[0]||'',...(n.mode==='product'&&!nextIds.length?{mode:'none'}:{})},updatedAt:serverTimestamp()});
+    if(stock.exists()){
+     const old=stock.data(),quantities={...(old.quantities||{})},variantQuantities={...(old.variantQuantities||{})};
+     delete quantities[id];for(const key of Object.keys(variantQuantities))if(key.startsWith(id+'::'))delete variantQuantities[key];
+     tx.update(stockRef,{quantities,variantQuantities,updatedAt:serverTimestamp()});
     }
-   }
-  });
+    if(settings.exists()){
+     const d=settings.data(),n=d.novelty||{},oldIds=Array.isArray(n.productIds)?n.productIds:(n.productId?[n.productId]:[]),nextIds=oldIds.filter(x=>x!==id);
+     if(nextIds.length!==oldIds.length||n.productId===id){
+      tx.update(settingsRef,{novelty:{...n,productIds:nextIds,productId:nextIds[0]||'',...(n.mode==='product'&&!nextIds.length?{mode:'none'}:{})},updatedAt:serverTimestamp()});
+     }
+    }
+   });
+   removed++;
+  }
   selectedProductIds.clear();
-  try{await refresh();message(ids.length+'件の商品を削除しました。関連する組合せ設定も解除済みです。注文履歴は保持しています。');}
+  try{await refresh();message(ids.length+'件の商品をFirestoreから削除しました（商品・商品画像・残存していた公開画像）。注文履歴は保持しています。');}
   catch(reloadError){console.warn('削除後の一覧再取得に失敗',reloadError);message(ids.length+'件の商品削除は完了しました。一覧の再読み込みに失敗したため、ページを更新して最新の状態を確認してください。');}
- }catch(error){console.error('selected product delete',error);message('削除できませんでした：'+errText(error),true);}
+ }catch(error){console.error('selected product delete',error);await refresh().catch(()=>{});message('削除を停止しました。複数選択時は一部が削除済みの場合があります。最新の一覧をご確認ください：'+errText(error),true);}
  finally{busy=false;updateDeleteSelection();}
 }
 $('select-visible').addEventListener('change',event=>{

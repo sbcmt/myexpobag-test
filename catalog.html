@@ -48,16 +48,8 @@ button.primary{background:#163847;color:white;border-color:#163847}button:disabl
 footer{text-align:center;color:#82909a;font-size:11px;margin:25px 0}
 @media(max-width:780px){.form-grid{grid-template-columns:1fr 1fr}.toggle{grid-column:1/-1}.variant-grid{grid-template-columns:1fr 1fr}.variant-name{grid-column:1/-1}}
 @media(max-width:540px){.filters{grid-template-columns:1fr}.card{padding:14px}.form-grid{grid-template-columns:1fr 1fr}.itemhead{align-items:flex-start}.variant-grid{grid-template-columns:1fr 1fr}}
-
-/* Deletion confirmation: only two explicit buttons, no typed phrase. */
-.delete-confirm-dialog{border:1px solid #d7e1e5;border-radius:15px;max-width:min(420px,calc(100% - 32px));width:100%;padding:22px;background:#fff;color:#142734;box-shadow:0 12px 40px #102c3860}
-.delete-confirm-dialog::backdrop{background:rgba(15,31,43,.56)}
-.delete-confirm-dialog p{font-size:15px;line-height:1.75;font-weight:700;margin:0 0 22px}
-.delete-confirm-actions{display:flex;justify-content:flex-end;gap:10px}
-.delete-confirm-actions button{min-width:100px}
-.delete-confirm-actions .danger{background:#982e2e;color:white;border-color:#982e2e}
 </style>
-<script src="./meb-plan.js?v=20261110-three-roles-2" defer></script></head>
+</head>
 <body>
 <header class="meb-admin-page-header"><div class="meb-admin-page-title"><h1>登録商品一覧・簡易編集</h1><p style="font-size:11px;color:#b9ced8;margin:4px 0 0" id="brand-name">MY EXPO BAG TEST</p></div><a href="./admin.html" class="meb-admin-back">← 管理ページ</a></header>
 <main>
@@ -68,20 +60,13 @@ footer{text-align:center;color:#82909a;font-size:11px;margin:25px 0}
  <div class="filters"><div class="field"><label for="search">商品名・商品ID</label><input id="search" type="search" autocomplete="off" placeholder="商品名または商品ID"></div><div class="field"><label for="category">カテゴリ</label><select id="category"><option value="">すべて</option></select></div><div class="field"><label for="filter">表示状態</label><select id="filter"><option value="all">すべて</option><option value="visible">表示設定</option><option value="hidden">非表示設定</option><option value="pending">公開待ち・変更未反映</option><option value="reserved">予約商品あり</option></select></div></div>
  <p class="summary" id="results" aria-live="polite">読み込み中…</p>
  <div class="delete-toolbar"><label class="catalog-select"><input type="checkbox" id="select-visible" aria-label="表示中の商品をすべて選択">表示中をすべて選択</label><span id="delete-selected-count" class="catalog-selection-info">0件を選択中</span><button type="button" id="delete-selected" disabled>選択した商品を削除</button></div>
- <p class="lead">公開中の商品は、現在ほかの利用者のMY BAGに入っているか確認できないため、非表示にして公開反映後に削除できます。未処理の注文がある商品は削除できません。組合せ販売の参照は削除時に自動解除します。売上履歴は残ります。</p>
+ <p class="lead">削除は元に戻せません。公開済みの商品・未処理の注文・組合せ参照がある商品は、先に必要な解除操作をしてください。売上履歴は削除しません。</p>
  <div class="warning">変更内容は「この商品の変更を保存」で管理データに保存されます。<strong>購入者ページへの反映は別操作</strong>です。在庫の変更も公開するまで購入者側には反映されません。</div>
  <div id="items"><div class="empty">登録商品を確認しています…</div></div></section>
  <section class="card"><div class="row"><div><h2 style="font-size:16px;margin:0">お客様ページへの反映</h2><p class="lead" id="publish-hint">公開状態を確認しています…</p></div><a href="./products.html" style="padding:12px 14px;background:#163847;color:white;text-decoration:none;border-radius:9px;font-weight:700;font-size:13px">公開操作の画面へ →</a></div></section>
  <p id="message" role="status" aria-live="polite" hidden class="status"></p>
 </div>
-<dialog id="confirm-delete-dialog" class="delete-confirm-dialog" aria-labelledby="confirm-delete-text">
- <p id="confirm-delete-text">本当に削除しますか？削除は取り消せません。</p>
- <form method="dialog" class="delete-confirm-actions">
-  <button type="submit" value="cancel">キャンセル</button>
-  <button type="submit" value="delete" class="danger">削除</button>
- </form>
-</dialog>
 <footer>© 2021–2026 Dobhar-chú</footer>
 </main>
-<script type="module" src="./catalog.js?asset=20261110-delete-dialog-v3"></script>
+<script type="module" src="./catalog.js?asset=20261111-no5-quota-v1"></script>
 </body></html>

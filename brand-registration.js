@@ -43,6 +43,7 @@ export async function createBrand(user,input,operatorDetails={}){
   const db=getFirestore();
   const brandRef=doc(db,'brands',uid);
   const routeRef=doc(db,'brandHandles',slug);
+  const quotaRef=doc(db,'brands',uid,'productQuota','state');
   await runTransaction(db,async transaction=>{
     // Read all docs before writing, and make the public handle unique.
     const [existingBrand,existingHandle]=await Promise.all([transaction.get(brandRef),transaction.get(routeRef)]);
@@ -57,6 +58,7 @@ export async function createBrand(user,input,operatorDetails={}){
       createdAt:serverTimestamp(),updatedAt:serverTimestamp()
     });
     transaction.set(routeRef,{brandId:uid,ownerUid:uid,slug,displayName:original,logoUrl:'',operatorName});
+    transaction.set(quotaRef,{count:0,lastProductId:'',action:'init',updatedAt:serverTimestamp()});
   });
   return {slug,displayName:original,brandId:uid};
 }
