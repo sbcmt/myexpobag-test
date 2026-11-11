@@ -1,8 +1,9 @@
-/** MY EXPO BAG — authenticated, draft-only quick editing. All public changes need explicit publishing. */
+/** MY EXPO BAG — authenticated quick editing with automatic public synchronization. */
 import {initializeApp,getApps,getApp} from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
 import {getAuth,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
 import {getFirestore,doc,getDoc,getDocsFromServer,getDocFromServer,collection,query,where,runTransaction,serverTimestamp} from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 import {unpublishOneProduct} from './public-catalog-safety.js';
+import {syncCustomerCatalog,markCustomerSyncPending,customerSyncIsPending} from './customer-catalog-sync.js';
 const $=id=>document.getElementById(id);
 const config=window.MEB_FIREBASE_CONFIG||{};
 const MAX_PRICE=100000000;
@@ -92,14 +93,13 @@ function draw(){
  }).sort((a,b)=>a.id.localeCompare(b.id,'ja'));
  $('results').textContent=found.length+'件を表示／登録'+products.length+'件';
  visibleProductIds=found.map(p=>p.id);
- $('publish-hint').textContent=products.some(pending)?'購入者ページに未反映の変更があります。公開操作を行ってください。':'登録商品の変更は公開済みです。';
  const container=$('items');container.replaceChildren();
  if(!found.length){const e=document.createElement('div');e.className='empty';e.textContent=products.length?'条件に合う商品がありません。':'まだ商品は登録されていません。「＋ 商品を新規登録」から登録できます。';container.append(e);updateDeleteSelection();return;}
  for(const p of found){
   const form=document.createElement('form');form.className='item';form.dataset.productId=p.id;
   const head=document.createElement('div');head.className='itemhead';
   const hgroup=document.createElement('div');const title=document.createElement('p');title.className='item-name';title.textContent=p.name;const meta=document.createElement('p');meta.className='item-info';meta.textContent=p.categoryName+' ／ 商品ID：'+p.id+' ／ '+((p.variants||[]).length?p.variants.length+'種類のバリエーション':'単品商品');hgroup.append(title,meta);
-  const pills=document.createElement('div');pills.className='pills';pills.append(stateBadge(p.active===false?'非表示設定':pending(p)?'公開待ち・変更未反映':'公開済み',p.active===false?'off':pending(p)?'pending':'ok'));
+  const pills=document.createElement('div');pills.className='pills';pills.append(stateBadge(p.active===false?'非表示設定':pending(p)?'自動反映待ち・未反映':'公開済み',p.active===false?'off':pending(p)?'pending':'ok'));
   if(p.preorder===true||(p.variants||[]).some(v=>v.preorder===true))pills.append(stateBadge('予約販売あり',''));
   const right=document.createElement('div');right.className='itemhead-right';
   const selectLabel=document.createElement('label');selectLabel.className='catalog-select';
@@ -145,12 +145,19 @@ function changedFields(form,p){
  if(Object.keys(variants).length)payload.variants=variants;
  return payload;
 }
+async function autoSyncCatalog(){
+ markCustomerSyncPending(user.uid,brand.slug);
+ try{
+  await syncCustomerCatalog({db,uid:user.uid,slug:brand.slug,pro:window.MEB_PLAN?.isPro()===true});
+  return {ok:true};
+ }catch(error){console.error('Quick edit auto-sync failed',error);return {ok:false,error};}
+}
 async function saveRow(event,origin,form){
  event.preventDefault();if(busy)return;
  let patch;try{patch=changedFields(form,origin);}catch(e){message(e.message,true);return;}
  if(!Object.keys(patch).length){message('「'+origin.name+'」に変更はありません。');return;}
  if(!user){message('ログイン状態を確認できません。',true);return;}
- busy=true;document.querySelectorAll('#items button, #refresh').forEach(b=>b.disabled=true);message('「'+origin.name+'」を保存しています…');
+ busy=true;markCustomerSyncPending(user.uid,brand.slug);document.querySelectorAll('#items button, #refresh').forEach(b=>b.disabled=true);message('「'+origin.name+'」を保存しています…');
  try{
   const ref=doc(db,'brands',user.uid,'products',origin.id);
   await runTransaction(db,async tx=>{
@@ -181,23 +188,23 @@ async function saveRow(event,origin,form){
    for(const v of next.variants||[]){const regular=v.price??next.price,special=v.eventPrice??next.eventPrice;if(special!=null&&special>=regular)throw Error((v.name||v.code)+'のキャンペーン価格を確認してください。');}
    tx.update(ref,updates);
   });
-  // Hiding a product must immediately remove it from the public catalog.
-  // Other changes (price / stock) still require explicit publication.
+  // Hiding a product immediately removes it from the public catalog.
+  // All other changes are synchronized after a successful save.
   let publicHideError=null;
   if(patch.active===false){
    try{await unpublishOneProduct({db,uid:user.uid,slug:brand.slug,productId:origin.id});}
    catch(error){console.error('public hide failed',error);publicHideError=error;}
   }
+  message('「'+origin.name+'」をお客様ページへ自動反映しています…');
+  const sync=await autoSyncCatalog();
   await refresh();
-  if(publicHideError){
-   message('非表示設定は保存されましたが、お客様ページからの公開解除が失敗しました：'+errText(publicHideError)+'。この商品はまだ公開中の可能性があります。',true);
-  }else if(patch.active===false){
-   message('「'+origin.name+'」を非表示で保存し、お客様ページからも公開解除しました。');
+  if(publicHideError||!sync.ok){
+   message('「'+origin.name+'」の保存は完了しましたが、お客様ページへの自動反映に失敗しました：'+errText(publicHideError||sync.error)+'。次回アクセス時に自動で再試行します。',true);
   }else{
-   message('「'+origin.name+'」を保存しました。価格・表示・在庫の変更は購入者ページに未反映です。「公開操作の画面へ」から反映してください。');
+   message('「'+origin.name+'」を保存し、お客様ページにも自動反映しました。');
   }
  }catch(error){console.error('quick product update',error);message('保存できませんでした：'+errText(error),true);document.querySelectorAll('#items button, #refresh').forEach(b=>b.disabled=false);}
- finally{busy=false;$('refresh').disabled=false;}
+ finally{busy=false;$('refresh').disabled=false;document.querySelectorAll('#items button').forEach(b=>b.disabled=false);updateDeleteSelection();}
 }
 async function refresh(){
  const [drafts,pub,stock]=await Promise.all([
@@ -207,9 +214,8 @@ async function refresh(){
  ]);
  products=drafts.docs.map(d=>({...d.data(),id:d.id}));publishedExists=pub.exists();published=new Map((pub.data()?.products||[]).map(p=>[p.id,p]));publicStock=stock.exists()?stock.data():null;const initialDelete=new URLSearchParams(location.search).get('delete');if(initialDelete&&products.some(p=>p.id===initialDelete)){selectedProductIds.add(initialDelete);history.replaceState(null,'',location.pathname);$('search').value=initialDelete;}draw();
 }
-// Deletes are deliberately limited to *unpublished* items.
-// First unpublish in products.html and confirm the public catalog was updated.
-// Existing customer orders are retained as independent historical snapshots.
+// Delete checks current server state, unpublishes first, then deletes the item.
+// Existing customer orders are retained as historical snapshots.
 function idInOrder(order,id){
  const lines=Array.isArray(order.remainingLines)?order.remainingLines:(Array.isArray(order.items)?order.items:[]);
  return lines.some(item=>item?.id===id||item?.productId===id);
@@ -311,7 +317,8 @@ async function deleteSelected(){
    removed++;
   }
   selectedProductIds.clear();
-  try{await refresh();message(removed+'件の商品を削除しました。関連する組合せ設定も解除済みです。注文履歴は保持しています。');}
+  const sync=await autoSyncCatalog();
+  try{await refresh();message(sync.ok?removed+'件の商品を削除し、お客様ページも更新しました。注文履歴は保持しています。':removed+'件の商品削除は完了しましたが、公開情報の自動同期に失敗しました：'+errText(sync.error),!sync.ok);}
   catch(reloadError){console.warn('削除後の一覧再取得に失敗',reloadError);message(removed+'件の商品削除は完了しました。一覧の再読み込みに失敗したため、ページを更新してください。');}
  }catch(error){console.error('selected product delete',error);await refresh().catch(()=>{});message('削除を停止しました。公開解除のみ完了した商品や、複数選択で一部だけ削除済みの商品がある可能性があります。最新の一覧をご確認ください：'+errText(error),true);}
  finally{busy=false;updateDeleteSelection();}
@@ -332,7 +339,16 @@ if(!['apiKey','authDomain','projectId','appId'].every(k=>typeof config[k]==='str
    const b=await getDoc(doc(db,'brands',u.uid));
    if(!b.exists()||b.data().ownerUid!==u.uid||!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(b.data().slug))throw Error('ブランド情報を確認できません。');
    user=u;brand=b.data();$('brand-name').textContent=brand.displayName||brand.slug;
-   await refresh();$('loading').hidden=true;$('shell').hidden=false;document.documentElement.classList.remove('auth-pending');
+   await window.MEB_PLAN?.ready();
+   await refresh();
+   if(customerSyncIsPending(u.uid,brand.slug)||products.some(pending)){
+    busy=true;updateDeleteSelection();message('お客様ページの未反映情報を自動同期しています…');
+    const sync=await autoSyncCatalog();
+    if(sync.ok){await refresh();message('お客様ページの自動同期が完了しました。');}
+    else message('お客様ページへの自動同期に失敗しました：'+errText(sync.error),true);
+    busy=false;updateDeleteSelection();
+   }
+   $('loading').hidden=true;$('shell').hidden=false;document.documentElement.classList.remove('auth-pending');
   }catch(e){console.error(e);$('loading').className='status error';$('loading').textContent='商品一覧を読み込めませんでした：'+errText(e);document.documentElement.classList.remove('auth-pending');}
  },error=>{$('loading').className='status error';$('loading').textContent='ログイン確認に失敗しました：'+errText(error);document.documentElement.classList.remove('auth-pending');});
 }catch(error){$('loading').className='status error';$('loading').textContent='Firebaseの初期化に失敗しました：'+errText(error);document.documentElement.classList.remove('auth-pending');}

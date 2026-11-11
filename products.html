@@ -87,18 +87,13 @@
 <main>
 <div class="notice" id="loading">ログインとブランド情報を確認しています…</div>
 <div hidden="" id="shell">
-<section aria-label="公開操作" class="card"><div class="toolbar"><h2>お客様ページへの反映</h2><span class="pill">ブランド別</span></div>
-<div class="publish-state" id="publish-state" data-state="loading" role="status" aria-live="polite"><span class="publish-state-marker" aria-hidden="true"></span><span id="publish-state-text">公開状況を確認しています…</span></div>
-<p class="publish-explain">商品を非表示で保存したときは、お客様ページからも自動的に非表示になります。その他の価格・在庫などの変更は「お客様ページに反映」を押すまで公開されません。</p>
-<div class="row"><button class="primary" id="publish-catalog" type="button">お客様ページに反映</button><a href="./index.html" id="public-customer-link" rel="noopener noreferrer" target="_blank">お客様ページを別タブで確認 ↗</a></div>
-<p aria-live="polite" class="status" hidden="" id="publish-status" role="status"></p></section>
 <p aria-live="polite" class="status" hidden="" id="status" role="status"></p>
 <section hidden class="card product-catalog-overview" id="registered-products" aria-labelledby="registered-products-title">
 <div class="toolbar"><div><h2 id="registered-products-title">登録済み商品 <span id="product-count">0</span>件</h2><p class="muted" style="margin:0">登録した商品を検索し、編集・公開状況を確認できます。</p></div><button id="refresh-products" type="button">一覧を更新</button></div>
 <div class="product-filters" aria-label="登録商品を絞り込む">
  <label class="field" for="product-filter-search"><span>商品名・商品ID</span><input type="search" id="product-filter-search" placeholder="商品名・商品IDで検索" autocomplete="off"/></label>
  <label class="field" for="product-filter-category"><span>カテゴリ</span><select id="product-filter-category"><option value="">すべてのカテゴリ</option></select></label>
- <label class="field" for="product-filter-state"><span>表示・在庫状態</span><select id="product-filter-state"><option value="all">すべて</option><option value="published">公開済み</option><option value="pending">公開待ち・変更未反映</option><option value="hidden">非公開設定</option><option value="preorder">予約販売</option><option value="soldout">在庫切れ</option></select></label>
+ <label class="field" for="product-filter-state"><span>表示・在庫状態</span><select id="product-filter-state"><option value="all">すべて</option><option value="published">公開済み</option><option value="pending">自動反映待ち・未反映</option><option value="hidden">非公開設定</option><option value="preorder">予約販売</option><option value="soldout">在庫切れ</option></select></label>
 </div>
 <div class="product-results-summary" id="product-results-summary" aria-live="polite">0件</div>
 <div class="product-list" id="product-list"><p class="muted">商品はまだ登録されていません。</p></div></section>
@@ -107,7 +102,7 @@
 <div class="category-list" id="categories"></div>
 <form class="row" id="category-form"><input aria-label="追加するカテゴリ" id="new-category" maxlength="40" placeholder="例：ランタン、バッグ、雑貨" required="" style="flex:1;min-width:180px;padding:11px;border-radius:9px;border:1px solid #bbcbd5;font:inherit;font-size:14px"/><button class="primary" type="submit">カテゴリを追加</button></form>
 <p class="muted">使用中のカテゴリは削除できません。商品を別カテゴリに変更してから削除できます。</p></section>
-<section class="card meb-editor"><div class="toolbar"><h2>商品登録・編集</h2></div>
+<section class="card meb-editor"><div class="toolbar"><h2>商品登録・編集</h2><a href="./index.html" id="public-customer-link" rel="noopener noreferrer" target="_blank" style="font-size:13px;color:#175878;text-decoration:underline">お客様ページを確認 ↗</a></div>
 <form id="product-form" novalidate>
 <p class="tab-draft-status" id="tab-draft-status" role="status" aria-live="polite">この商品の入力内容は各タブで共通です。どのタブから保存しても、基本情報・画像・バリエーション・予約・組合せ商品をまとめて保存します。</p>
 <div class="product-tabs" role="tablist" aria-label="商品登録の項目">
@@ -125,9 +120,9 @@
 <div class="cols"><div class="field"><label for="product-price">通常価格（税込・円・必須）</label><input id="product-price" max="100000000" min="0" placeholder="4800" required step="1" type="number"/></div><div class="field"><label for="product-event-price">キャンペーン価格／展示会特価（税込・円・任意）</label><input id="product-event-price" max="100000000" min="0" placeholder="4200" step="1" type="number"/></div></div>
 <div class="cols"><div class="field"><label for="product-jan">JANコード（任意）</label><input id="product-jan" inputmode="numeric" maxlength="14" placeholder="バリエーションなしの場合に入力"/><p class="hint" id="jan-hint">バリエーションを設定すると、こちらのJANは無効になります。</p></div><div class="field"><label for="product-stock">通常在庫数（任意）</label><input id="product-stock" max="100000000" min="0" placeholder="空欄は無制限" step="1" type="number"/><p aria-live="polite" class="hint" id="product-stock-hint">バリエーションなしの商品はここで在庫を入力します。</p></div></div>
 <label class="checkline"><input id="product-preorder-all" type="checkbox"/> 商品全体を予約販売にする</label><p class="hint" id="preorder-all-hint">バリエーションがある場合は全種類を予約対象にします。個別指定すると自動的に解除されます。</p>
-<label class="checkline"><input checked id="product-active" type="checkbox"/> この商品をお客様ページに表示する（非表示は保存と同時に反映）</label>
+<label class="checkline"><input checked id="product-active" type="checkbox"/> この商品をお客様ページに表示する（保存と同時に自動反映）</label>
 
-<div class="tab-save-actions"><button type="submit" class="primary tab-save-button">この商品の全タブをまとめて保存</button><span class="muted">画像・予約・バリエーションも同時保存</span></div>
+<div class="tab-save-actions"><button type="submit" class="primary tab-save-button">この商品の全タブをまとめて保存</button><span class="muted">画像・予約・バリエーションも同時保存／お客様ページへ自動反映</span></div>
 </section>
 <section class="product-tab-panel" id="panel-image" role="tabpanel" aria-labelledby="tab-image" hidden>
 <p class="tab-description">商品全体で最大2枚です。今回はPro.向けの2枚登録UIを先に実装します。Freeの1枚制限は有料化の段階で適用します。</p>
@@ -143,7 +138,7 @@
 <div aria-live="polite" class="bulk-list" hidden="" id="images-preview"></div>
 <div class="row" style="margin-top:12px"><button class="primary" disabled="" id="images-save" type="button">確認した画像を一括登録</button><span class="muted" id="images-count"></span></div>
 </div>
-<div class="tab-save-actions"><button type="submit" class="primary tab-save-button">この商品の全タブをまとめて保存</button><span class="muted">画像・予約・バリエーションも同時保存</span></div>
+<div class="tab-save-actions"><button type="submit" class="primary tab-save-button">この商品の全タブをまとめて保存</button><span class="muted">画像・予約・バリエーションも同時保存／お客様ページへ自動反映</span></div>
 </section>
 <section class="product-tab-panel" id="panel-variants" role="tabpanel" aria-labelledby="tab-variants" hidden>
 <p class="tab-description">各行の在庫数は、予約販売にチェックすると「予約品在庫数」に切り替わり、予約タブと自動同期します。チェックを外すと元の通常在庫に戻ります。</p>
@@ -157,7 +152,7 @@
 <div class="row"><button type="button" id="add-variant">＋ 行を追加</button><span id="variant-entry-hint" class="muted" hidden>商品コードは「親商品ID_サブコード」で登録します。</span></div>
 
 
-<div class="tab-save-actions"><button type="submit" class="primary tab-save-button">この商品の全タブをまとめて保存</button><span class="muted">画像・予約・バリエーションも同時保存</span></div>
+<div class="tab-save-actions"><button type="submit" class="primary tab-save-button">この商品の全タブをまとめて保存</button><span class="muted">画像・予約・バリエーションも同時保存／お客様ページへ自動反映</span></div>
 </section>
 <section class="product-tab-panel" id="panel-preorder" role="tabpanel" aria-labelledby="tab-preorder" hidden>
 <p class="tab-description">商品名・バリエーションを自動表示します。予約可否は基本情報・バリエーションのチェックと連動します。</p>
@@ -171,14 +166,14 @@
 <div class="reservation-scroller"><table class="reservation-table"><thead><tr><th scope="col">商品名</th><th scope="col">バリエーション</th><th scope="col">予約可否</th><th scope="col">発売予定（年・月・時期）</th><th scope="col">予約品在庫数</th><th scope="col">予約販売時価格</th></tr></thead><tbody id="reservation-rows"></tbody></table></div>
 <p class="hint">発売予定は1行で表示します。予約品在庫数はバリエーションタブの在庫数と自動同期します（予約チェック中のみ）。一括設定は予約対象の発売予定だけに反映します。</p>
 
-<div class="tab-save-actions"><button type="submit" class="primary tab-save-button">この商品の全タブをまとめて保存</button><span class="muted">画像・予約・バリエーションも同時保存</span></div>
+<div class="tab-save-actions"><button type="submit" class="primary tab-save-button">この商品の全タブをまとめて保存</button><span class="muted">画像・予約・バリエーションも同時保存／お客様ページへ自動反映</span></div>
 </section>
 <section class="product-tab-panel" id="panel-combo" role="tabpanel" aria-labelledby="tab-combo" hidden>
 <p class="tab-description">他の商品と同時購入した際の組合せ割引を設定します。</p>
 <div class="variant-block"><div class="toolbar"><strong>組合せ販売（任意）</strong><span class="muted" id="combo-count">0 / 3件</span></div><div id="combo-rows"></div><button id="add-combo" type="button">＋ 組合せ商品を追加</button><p class="hint" id="combo-entry-hint" hidden>最大3件。相手の商品IDと組合せ購入時の割引額を指定します。</p></div>
 
 
-<div class="tab-save-actions"><button type="submit" class="primary tab-save-button">この商品の全タブをまとめて保存</button><span class="muted">画像・予約・バリエーションも同時保存</span></div>
+<div class="tab-save-actions"><button type="submit" class="primary tab-save-button">この商品の全タブをまとめて保存</button><span class="muted">画像・予約・バリエーションも同時保存／お客様ページへ自動反映</span></div>
 </section>
 <section class="product-tab-panel" id="panel-csv" role="tabpanel" aria-labelledby="tab-csv" hidden><h3>CSV商品一括登録</h3>
 <div class="row" style="margin-bottom:12px"><button id="download-csv" type="button">CSVテンプレートをDL</button><button id="sample-csv" type="button">CSV入力例をDL</button><button id="export-csv" type="button">登録商品をCSVでDL</button></div>
@@ -227,6 +222,6 @@
   },15000);
 })();
 </script>
-<script onerror="window.MEB_PRODUCTS_STARTUP_ERROR?.()" src="./products.js?v=20261111-combined-fix1" type="module"></script>
+<script onerror="window.MEB_PRODUCTS_STARTUP_ERROR?.()" src="./products.js?v=20261111-auto-publish1" type="module"></script>
 <div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
 </body></html>

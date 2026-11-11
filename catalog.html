@@ -65,13 +65,12 @@ footer{text-align:center;color:#82909a;font-size:11px;margin:25px 0}
 <div id="shell" hidden>
  <div class="toplinks"><a href="./products.html">＋ 商品を新規登録</a><a href="./products.html">商品詳細・CSVを編集</a><a href="./settings.html">ブランド設定</a></div>
  <section class="card" aria-labelledby="list-title"><div class="row"><div><h2 id="list-title" style="font-size:17px;margin:0">登録商品 <span id="total">0</span>件</h2><p class="lead">商品の表示状態・通常価格・キャンペーン価格・在庫数を一覧から変更できます。</p></div><button id="refresh" type="button">最新データを取得</button></div>
- <div class="filters"><div class="field"><label for="search">商品名・商品ID</label><input id="search" type="search" autocomplete="off" placeholder="商品名または商品ID"></div><div class="field"><label for="category">カテゴリ</label><select id="category"><option value="">すべて</option></select></div><div class="field"><label for="filter">表示状態</label><select id="filter"><option value="all">すべて</option><option value="visible">表示設定</option><option value="hidden">非表示設定</option><option value="pending">公開待ち・変更未反映</option><option value="reserved">予約商品あり</option></select></div></div>
+ <div class="filters"><div class="field"><label for="search">商品名・商品ID</label><input id="search" type="search" autocomplete="off" placeholder="商品名または商品ID"></div><div class="field"><label for="category">カテゴリ</label><select id="category"><option value="">すべて</option></select></div><div class="field"><label for="filter">表示状態</label><select id="filter"><option value="all">すべて</option><option value="visible">表示設定</option><option value="hidden">非表示設定</option><option value="pending">自動反映待ち・未反映</option><option value="reserved">予約商品あり</option></select></div></div>
  <p class="summary" id="results" aria-live="polite">読み込み中…</p>
  <div class="delete-toolbar"><label class="catalog-select"><input type="checkbox" id="select-visible" aria-label="表示中の商品をすべて選択">表示中をすべて選択</label><span id="delete-selected-count" class="catalog-selection-info">0件を選択中</span><button type="button" id="delete-selected" disabled>選択した商品を削除</button></div>
  <p class="lead">削除時には、お客様ページで公開中の商品も自動で非表示にしてから削除します。未処理の注文がある商品やブランドバナーで参照している商品は削除できません。組合せ販売の参照は削除時に自動解除し、注文履歴は残ります。</p>
- <div class="warning">非表示に変更して「この商品の変更を保存」を押すと、<strong>お客様ページからも直ちに非表示</strong>にします。価格・在庫などその他の変更は、従来どおり公開操作で反映します。</div>
+ <div class="warning">表示・非表示、価格、在庫などの変更は「この商品の変更を保存」で<strong>お客様ページにも自動反映</strong>されます。別途の公開操作は不要です。</div>
  <div id="items"><div class="empty">登録商品を確認しています…</div></div></section>
- <section class="card"><div class="row"><div><h2 style="font-size:16px;margin:0">お客様ページへの反映</h2><p class="lead" id="publish-hint">公開状態を確認しています…</p></div><a href="./products.html" style="padding:12px 14px;background:#163847;color:white;text-decoration:none;border-radius:9px;font-weight:700;font-size:13px">公開操作の画面へ →</a></div></section>
  <p id="message" role="status" aria-live="polite" hidden class="status"></p>
 </div>
 <dialog id="confirm-delete-dialog" class="delete-confirm-dialog" aria-labelledby="confirm-delete-text">
@@ -83,5 +82,5 @@ footer{text-align:center;color:#82909a;font-size:11px;margin:25px 0}
 </dialog>
 <footer>© 2021–2026 Dobhar-chú</footer>
 </main>
-<script type="module" src="./catalog.js?asset=20261111-combined-fix1"></script>
+<script type="module" src="./catalog.js?asset=20261111-auto-publish1"></script>
 </body></html>
