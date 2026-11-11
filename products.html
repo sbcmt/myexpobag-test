@@ -77,6 +77,12 @@
 .reservation-table .reservation-price-mode{width:160px;min-width:150px;max-width:180px;white-space:nowrap}
 .reservation-table .reservation-price-amount{margin-top:3px;font-size:11px;font-variant-numeric:tabular-nums;color:#446273;white-space:nowrap}
 .reservation-table td:nth-child(4) .reservation-date{min-width:244px;flex-wrap:nowrap}
+.bulk-import-section{padding:15px;border:1px solid #dce5ea;border-radius:11px;background:#fbfcfd;margin:14px 0 17px}
+.bulk-import-section h3{font-size:15px;margin:0 0 12px}
+.bulk-file-rules{background:#f1f6f9;border-left:3px solid #6995a9;padding:12px 14px;border-radius:7px;margin:12px 0 15px;font-size:12px;line-height:1.7}
+.bulk-file-rules p{margin:5px 0 9px}.bulk-filename-example{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:5px 0}
+.bulk-file-rules code{display:inline-block;background:#fff;border:1px solid #d3e0e7;border-radius:5px;padding:2px 5px;font-size:12px}
+@media(max-width:520px){.bulk-import-section{padding:12px}}
 </style><style id="meb-copyright-style">.meb-copyright{box-sizing:border-box;display:block;margin:16px auto 24px;padding:10px 14px;text-align:center;color:#8c98a0;font:11px/1.7 -apple-system,BlinkMacSystemFont,"Noto Sans JP",sans-serif;letter-spacing:.025em}@media print{.meb-copyright{display:none!important}}</style><link rel="stylesheet" href="./admin-navigation.css?v=20261016-v114"/>
 <script src="./meb-plan.js?v=20261110-three-roles-2" defer></script><style>.product-tab-panel[data-plan-locked="true"] .plan-restriction{display:block}.product-tab-panel[data-plan-locked="true"] input:disabled,.product-tab-panel[data-plan-locked="true"] select:disabled{opacity:.65}html[data-meb-plan="free"] #tab-csv::after,html[data-meb-plan="free"] #tab-combo::after,html[data-meb-plan="free"] #tab-preorder::after{content:" Pro.";font-size:10px;opacity:.75}</style></head>
 <body>
@@ -107,7 +113,7 @@
 <button type="button" data-product-tab="variants" role="tab" aria-selected="false" aria-controls="panel-variants" id="tab-variants">バリエーション</button>
 <button type="button" data-product-tab="preorder" role="tab" aria-selected="false" aria-controls="panel-preorder" id="tab-preorder">予約</button>
 <button type="button" data-product-tab="combo" role="tab" aria-selected="false" aria-controls="panel-combo" id="tab-combo">組合せ商品</button>
-<button type="button" data-product-tab="csv" role="tab" aria-selected="false" aria-controls="panel-csv" id="tab-csv">CSV一括登録</button>
+<button type="button" data-product-tab="csv" role="tab" aria-selected="false" aria-controls="panel-csv" id="tab-csv">商品一括登録</button>
 </div>
 <section class="product-tab-panel" id="panel-basic" role="tabpanel" aria-labelledby="tab-basic">
 <p class="tab-description">商品を販売するための基本情報です。展示会・キャンペーン価格もこちらで設定します。</p>
@@ -126,14 +132,7 @@
 <div class="photo-slot"><strong>画像1（メイン）</strong><img alt="メイン画像プレビュー" class="photo-preview" hidden id="product-image-preview"/><input accept="image/*,.heic,.heif" id="product-image" type="file"/><label class="checkline"><input id="product-image-delete" type="checkbox"/> この画像を削除</label><p class="image-note" id="product-image-hint">画像を選択してください。</p></div>
 <div class="photo-slot"><strong>画像2（サブ）</strong><img alt="サブ画像プレビュー" class="photo-preview" hidden id="product-image-preview-2"/><input accept="image/*,.heic,.heif" id="product-image-2" type="file"/><label class="checkline"><input id="product-image-delete-2" type="checkbox"/> この画像を削除</label><p class="image-note" id="product-image-hint-2">任意で登録できます。</p></div>
 </div><p class="hint">保存時は両方の画像を自動圧縮します。A1用POPの背景画像には一切影響しません。</p>
-<div style="border-top:1px solid #e1e8ed;margin-top:22px;padding-top:18px">
-<h2>画像一括登録</h2>
-<p class="hint">推奨：JPG・PNG・WebP／各15MB以下、ZIP最大50MB</p>
-<div class="field"><label for="images-import">画像ZIPファイル（1回50画像まで）</label><input accept=".zip,application/zip,application/x-zip-compressed" id="images-import" type="file"/></div>
-<p class="image-note">推奨：JPG・PNG・WebP／画像1枚15MB以下・ZIP最大50MB</p>
-<div aria-live="polite" class="bulk-list" hidden="" id="images-preview"></div>
-<div class="row" style="margin-top:12px"><button class="primary" disabled="" id="images-save" type="button">確認した画像を一括登録</button><span class="muted" id="images-count"></span></div>
-</div>
+
 <div class="tab-save-actions"><button type="submit" class="primary tab-save-button">この商品の全タブをまとめて保存</button><span class="muted">画像・予約・バリエーションも同時保存／お客様ページへ自動反映</span></div>
 </section>
 <section class="product-tab-panel" id="panel-variants" role="tabpanel" aria-labelledby="tab-variants" hidden>
@@ -171,13 +170,30 @@
 
 <div class="tab-save-actions"><button type="submit" class="primary tab-save-button">この商品の全タブをまとめて保存</button><span class="muted">画像・予約・バリエーションも同時保存／お客様ページへ自動反映</span></div>
 </section>
-<section class="product-tab-panel" id="panel-csv" role="tabpanel" aria-labelledby="tab-csv" hidden><h3>CSV商品一括登録</h3>
+<section class="product-tab-panel" id="panel-csv" role="tabpanel" aria-labelledby="tab-csv" hidden>
+<p class="tab-description">CSVと画像ZIPによる一括登録はPro.・tester専用です。通常の商品登録や画像1枚ずつの登録は他のタブから行えます。</p>
+<div class="bulk-import-section"><h3>① CSVで商品を一括登録</h3>
 <div class="row" style="margin-bottom:12px"><button id="download-csv" type="button">CSVテンプレートをDL</button><button id="sample-csv" type="button">CSV入力例をDL</button><button id="export-csv" type="button">登録商品をCSVでDL</button></div>
 <p class="hint">CSVの見出しに「(必須)」「(任意)」「(予約時必須)」などを表示します。<strong>入力欄の色分けはCSVに保存されない</strong>ため、区分別の入力例は取扱説明書で確認してください。ノベルティ対象は 1＝対象、0／空欄＝対象外です。</p>
 <div class="field"><label for="import-file">一括登録ファイル（CSV .csv のみ）</label><input accept=".csv,text/csv" id="import-file" type="file"/></div>
 <div class="preview" hidden="" id="import-preview"></div>
 <div class="row" style="margin-top:12px"><button class="primary" disabled="" id="import-save" type="button">確認した商品を登録</button><span class="muted">1回300商品まで</span></div>
-
+</div>
+<div class="bulk-import-section" aria-label="画像ZIP一括登録">
+<h3>② ZIPで商品画像を一括登録</h3>
+<p class="hint">登録済みの商品IDと画像ファイル名を照合し、<strong>メイン画像（画像1）</strong>を一括登録・上書きします。サブ画像（画像2）は変更しません。</p>
+<div class="bulk-file-rules">
+<strong>画像ファイル名のルール</strong>
+<p>拡張子を除いたファイル名は、<strong>登録済みの商品IDと完全一致</strong>させてください（大文字・小文字も区別します）。</p>
+<div class="bulk-filename-example"><span>正しい例：</span><code>LT-001.jpg</code> <span>（商品IDが <code>LT-001</code> のとき）</span></div>
+<div class="bulk-filename-example"><span>登録できない例：</span><code>LT-001_1.jpg</code> <span>（商品IDが <code>LT-001</code> のとき）</span></div>
+<p class="hint">1商品につき1画像まで。ZIP内に同じ商品IDの画像が複数ある場合、その商品IDの画像は登録対象から除外します。登録済みの商品IDがない画像も除外します。</p>
+</div>
+<div class="field"><label for="images-import">画像ZIPファイル（1回50画像まで）</label><input accept=".zip,application/zip,application/x-zip-compressed" id="images-import" type="file"/></div>
+<p class="image-note">JPG・PNG・WebP推奨（HEIC・HEIFも読込対象ですが、ブラウザーによって対応が異なります）。画像1枚15MB以下、ZIP最大50MB。</p>
+<div aria-live="polite" class="bulk-list" hidden="" id="images-preview"></div>
+<div class="row" style="margin-top:12px"><button class="primary" disabled="" id="images-save" type="button">確認した画像を一括登録</button><span class="muted" id="images-count"></span></div>
+</div>
 </section>
 <div class="editor-actions row"><button class="primary" id="product-save" type="submit">商品全体を保存</button><button id="product-clear" type="button">入力をクリア</button><span class="muted" id="edit-note">新規登録</span></div>
 </form></section>
@@ -218,6 +234,6 @@
   },15000);
 })();
 </script>
-<script onerror="window.MEB_PRODUCTS_STARTUP_ERROR?.()" src="./products.js?v=20261111-draftquiet1" type="module"></script>
+<script onerror="window.MEB_PRODUCTS_STARTUP_ERROR?.()" src="./products.js?v=20261111-bulkui1" type="module"></script>
 <div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
 </body></html>

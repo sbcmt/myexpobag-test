@@ -25,7 +25,7 @@ const brandSettingsRef=()=>doc(db,'brandSettings',brand.slug);
 const trim=v=>String(v??'').trim();
 const yen=n=>'¥'+Number(n).toLocaleString('ja-JP');
 function status(message,error=false){const e=$('status');e.textContent=message;e.className='status'+(error?' error':'');e.hidden=false;}
-function refreshActionButtons(){for(const id of ['product-save','import-save','images-save'])$(id).disabled=busy||imageProcessing||(id==='import-save'&&(!importData||!isPro()))||(id==='images-save'&&!imagesReady.length);for(const b of document.querySelectorAll('.tab-save-button'))b.disabled=busy||imageProcessing;if(user)categoryOptions();}
+function refreshActionButtons(){for(const id of ['product-save','import-save','images-save'])$(id).disabled=busy||imageProcessing||(id==='import-save'&&(!importData||!isPro()))||(id==='images-save'&&(!imagesReady.length||!isPro()));for(const b of document.querySelectorAll('.tab-save-button'))b.disabled=busy||imageProcessing;if(user)categoryOptions();}
 // Reapply Free locks when editable rows are dynamically regenerated.
 // A disabled control must never be the only line of authorization; server rules
 // and validation on saving/publishing remain in effect.
@@ -167,6 +167,7 @@ async function loadSavedImage(id,revision){
 }
 function clearImagesPreview(){imagesReady=[];$('images-save').disabled=true;$('images-preview').hidden=true;$('images-preview').replaceChildren();$('images-count').textContent='';}
 async function imageBulkCheck(){
+ if(!isPro()){$('images-import').value='';clearImagesPreview();return;}
  clearImagesPreview();const archive=$('images-import').files?.[0];if(!archive)return;
  if(!window.JSZip){status('ZIP読み込みライブラリを読み込めません。インターネット接続を確認してください。',true);return;}
  if(!/\.zip$/i.test(archive.name)||archive.size>50*1024*1024){status('ZIPファイルは50MB以内にしてください。',true);return;}
