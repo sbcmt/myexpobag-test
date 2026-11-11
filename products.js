@@ -575,15 +575,11 @@ function inputData(){
   price:$('product-price').value,eventPrice:$('product-event-price').value,variants:readVariants(id),variantAxes:axisSpec(),active:$('product-active').checked,noveltyTarget:noveltyIds.has(id),
   janCode:$('product-jan').value,stock:$('product-stock').value,...base,preorderAll:parentPreorderMode,combos:readCombos(id)});
 }
+// Keep draft state only for navigation protection; do not show a warning
+// banner every time the user types. Save results are shown via status().
 let productDraftDirty=false;
-function markProductDraftDirty(){
- productDraftDirty=true;
- const node=$('tab-draft-status');if(node){node.dataset.dirty='true';node.dataset.saved='false';node.textContent='未保存の入力内容があります。どのタブの「この商品の全タブをまとめて保存」からでも、全項目を一括保存できます。';}
-}
-function markProductDraftClean(){
- productDraftDirty=false;
- const node=$('tab-draft-status');if(node){node.dataset.dirty='false';node.dataset.saved='true';node.textContent='商品全体を保存しました。お客様ページへの反映は自動で行います。';}
-}
+function markProductDraftDirty(){ productDraftDirty=true; }
+function markProductDraftClean(){ productDraftDirty=false; }
 // All non-CSV editor tabs belong to #product-form. Hidden tabs keep their DOM values.
 // Input, checkbox, dynamic SKU and reservation table changes share this same draft.
 const productEditor=$('product-form');
@@ -742,14 +738,14 @@ function editProduct(id){
  $('product-jan').value=p.janCode||'';resetTotalStockState(p.stock??'');
  showCombos(existingCombos(p));$('product-active').checked=p.active!==false;
  pendingImages=[undefined,undefined];for(let slot=0;slot<2;slot++){ $(imageId('product-image',slot)).value='';$(imageId('product-image-delete',slot)).checked=false; }
- loadSavedImage(id,++imageRevision);$('edit-note').textContent='編集中：'+p.id+'（商品IDは変更できません）';productDraftDirty=false;const draftMessage=$('tab-draft-status');if(draftMessage){draftMessage.dataset.dirty='false';draftMessage.dataset.saved='false';draftMessage.textContent='保存済み商品の編集中です。変更は各タブで保持され、どこから保存しても商品全体に反映されます。';}selectProductTab('basic');$('product-form').scrollIntoView({behavior:'smooth',block:'start'});
+ loadSavedImage(id,++imageRevision);$('edit-note').textContent='編集中：'+p.id+'（商品IDは変更できません）';productDraftDirty=false;selectProductTab('basic');$('product-form').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function clearForm(){
  ++imageRevision;imageSlotRevision=[0,0];pendingImages=[undefined,undefined];imageTaskCount=0;imageProcessing=false;$('product-form').reset();totalAutoMode=false;manualTotalDraft='';reservationDrafts.clear();$('reservation-rows').replaceChildren();parentPreorderMode=false;$('product-preorder-all').checked=false;
  for(const id of ['axis1-name','axis2-name'])$(id).value='';
  showVariants();showCombos();$('product-id').readOnly=false;$('product-active').checked=true;$('edit-note').textContent='新規登録';
  for(let slot=0;slot<2;slot++){imagePreview('',slot);$(imageId('product-image-hint',slot)).textContent='画像未登録。';$(imageId('product-image',slot)).value='';$(imageId('product-image-delete',slot)).checked=false;}
- selectProductTab('basic');setBusy(busy);productDraftDirty=false;const label=$('tab-draft-status');if(label){label.dataset.dirty='false';label.dataset.saved='false';label.textContent='この商品の入力内容は各タブで共通です。どのタブから保存しても、基本情報・画像・バリエーション・予約・組合せ商品をまとめて保存します。';}
+ selectProductTab('basic');setBusy(busy);productDraftDirty=false;
 }
 function toFirestore(p,original){return {...p,createdAt:original?.createdAt||serverTimestamp(),updatedAt:serverTimestamp()};}
 async function saveProduct(event){

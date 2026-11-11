@@ -67,9 +67,6 @@
 @media(max-width:420px){.product-filters{grid-template-columns:1fr}.product-filters .field:first-child{grid-column:auto}}
 
 /* Shared product draft: one single form / one save handler, regardless of active tab */
-.tab-draft-status{font-size:12px;line-height:1.7;padding:10px 12px;background:#f3f7fa;border:1px solid #cfdee7;border-radius:9px;color:#365668;margin:12px 0}
-.tab-draft-status[data-dirty="true"]{background:#fff8e6;border-color:#ebd49f;color:#7b541a}
-.tab-draft-status[data-saved="true"]{background:#eaf7ef;border-color:#b9dec8;color:#24643c}
 .tab-save-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:20px 0 3px;padding:14px 0 0;border-top:1px solid #e0e9ef}
 .tab-save-actions .muted{font-size:11px}
 
@@ -104,7 +101,6 @@
 <p class="muted">使用中のカテゴリは削除できません。商品を別カテゴリに変更してから削除できます。</p></section>
 <section class="card meb-editor"><div class="toolbar"><h2>商品登録・編集</h2><a href="./index.html" id="public-customer-link" rel="noopener noreferrer" target="_blank" style="font-size:13px;color:#175878;text-decoration:underline">お客様ページを確認 ↗</a></div>
 <form id="product-form" novalidate>
-<p class="tab-draft-status" id="tab-draft-status" role="status" aria-live="polite">この商品の入力内容は各タブで共通です。どのタブから保存しても、基本情報・画像・バリエーション・予約・組合せ商品をまとめて保存します。</p>
 <div class="product-tabs" role="tablist" aria-label="商品登録の項目">
 <button type="button" class="active" data-product-tab="basic" role="tab" aria-selected="true" aria-controls="panel-basic" id="tab-basic">基本情報</button>
 <button type="button" data-product-tab="image" role="tab" aria-selected="false" aria-controls="panel-image" id="tab-image">画像</button>
@@ -222,6 +218,6 @@
   },15000);
 })();
 </script>
-<script onerror="window.MEB_PRODUCTS_STARTUP_ERROR?.()" src="./products.js?v=20261111-auto-publish1" type="module"></script>
+<script onerror="window.MEB_PRODUCTS_STARTUP_ERROR?.()" src="./products.js?v=20261111-draftquiet1" type="module"></script>
 <div class="meb-copyright">© 2021–2026 Dobhar-chú</div>
 </body></html>
