@@ -115,7 +115,9 @@ export async function syncCustomerCatalog({db,uid,slug,pro=false,onProgress=()=>
     const current=await tx.get(stockRef);
     if(!current.exists())tx.set(stockRef,{
      slug,brandId:uid,quantities:{},variantQuantities:{},
-     auditedQuantityIds:[],auditedVariantKeys:[],updatedAt:serverTimestamp()
+     auditedQuantityIds:[],auditedVariantKeys:[],
+     newQuantityIds:[],newVariantKeys:[],newVariantProductIds:[],newVariantIndexes:[],
+     updatedAt:serverTimestamp()
     });
    });
   }
@@ -150,7 +152,7 @@ export async function syncCustomerCatalog({db,uid,slug,pro=false,onProgress=()=>
      if(!publishedIds.has(id)||!p||p.active===false||!v){delete variantQuantities[key];continue;}
      variantQuantities[key]=(v.preorder===true?v.reservationStock:v.stock)??null;
     }
-    const audit=stockAuditFields(existing,quantities,variantQuantities);
+    const audit=stockAuditFields(existing,quantities,variantQuantities,latest);
     tx.update(stockRef,{quantities,variantQuantities,...audit,updatedAt:serverTimestamp()});
    });
    if(batchCount>1&&i%5===4)onProgress('公開在庫を検証して同期しています（'+(i+1)+'/'+batchCount+'）');

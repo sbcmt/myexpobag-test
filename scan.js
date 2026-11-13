@@ -301,7 +301,7 @@ async function reserveAtScan(parsed,quote){
     tx.update(productRefs[ids.indexOf(id)],update);
    }
   }
-  tx.update(refs.stock,{quantities:newQuantities,variantQuantities:newVariantQuantities,...stockAuditFields(stock,newQuantities,newVariantQuantities),updatedAt:serverTimestamp()});
+  tx.update(refs.stock,{quantities:newQuantities,variantQuantities:newVariantQuantities,...stockAuditFields(stock,newQuantities,newVariantQuantities,privateMap),updatedAt:serverTimestamp()});
   const data={orderId:raw.o,brandId:user.uid,originalItems:compactItems(items),originalAmount:latest.amount,
    originalLines,remainingLines:originalLines,bundles,items:compactItems(items),amount:latest.amount,status:'reserved',
    discountMode:latest.discountMode,discountValue:latest.discountValue,discountMinSpend:latest.discountMinSpend,discountRegistered:latest.discountRegistered,discountApplyToPreorder:latest.discountApplyToPreorder,
@@ -398,7 +398,7 @@ async function cancelLine(key,all=false){
    const base=reprice(kept,sale.bundles||[],sale,true);
    const shippingFee=kept.some(x=>x.preorder===true)&&['threshold','prefecture'].includes(sale.shippingMode)&&((sale.shippingThreshold||0)<=0||base<(sale.shippingThreshold||0))?(sale.shippingCharge||0):0;
    const nextStatus=kept.length?'reserved':'cancelled';
-   tx.update(refs.stock,{quantities:next,variantQuantities:nextVariants,...stockAuditFields(stock,next,nextVariants),updatedAt:serverTimestamp()});
+   tx.update(refs.stock,{quantities:next,variantQuantities:nextVariants,...stockAuditFields(stock,next,nextVariants,new Map(privateSnaps.map((snap,i)=>[ids[i],snap.exists()?snap.data():null]))),updatedAt:serverTimestamp()});
    if(kept.length){
     tx.update(refs.sale,{items:compactItems(kept),remainingLines:kept,amount,shippingFee,status:nextStatus,updatedAt:serverTimestamp()});
    }else{
