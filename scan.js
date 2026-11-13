@@ -262,7 +262,8 @@ async function reserveAtScan(parsed,quote){
   // Preserve the public cancellation marker: deleting a sale must never make its QR reusable.
   // All reads precede writes. Concurrency on stock prevents overselling.
   const customerRef=doc(db,'customerOrders',brand.slug,'orders',raw.o);
-  const [ackSnap,stockSnap,catalogSnap,settingsSnap,customerSnap,...prodSnaps]=await Promise.all([tx.get(refs.confirmation),tx.get(refs.stock),tx.get(refs.catalog),tx.get(refs.settings),tx.get(customerRef),...productRefs.map(ref=>tx.get(ref))]);
+  const pendingRef=doc(db,'pendingCustomerOrders',brand.slug,'orders',raw.o);
+  const [ackSnap,stockSnap,catalogSnap,settingsSnap,customerSnap,pendingSnap,...prodSnaps]=await Promise.all([tx.get(refs.confirmation),tx.get(refs.stock),tx.get(refs.catalog),tx.get(refs.settings),tx.get(customerRef),tx.get(pendingRef),...productRefs.map(ref=>tx.get(ref))]);
   if(ackSnap.exists())throw Error(ackSnap.data().status==='cancelled'?'この購入QRは取消済みのため再利用できません。':'この購入QRはすでに受付済みです。履歴を確認してください。');
   if(!stockSnap.exists()||!catalogSnap.exists())throw Error('商品・在庫の公開が未完了です。');
   const stock=stockSnap.data(),catalog=catalogSnap.data();
@@ -270,7 +271,12 @@ async function reserveAtScan(parsed,quote){
   const privateMap=new Map();prodSnaps.forEach((snap,i)=>{if(snap.exists())privateMap.set(ids[i],snap.data());});
   const latest=calculate(parsed,catalog,settingsSnap.exists()&&settingsSnap.data().brandId===user.uid?settingsSnap.data():{});
   if(latest.amount!==quote.amount)throw Error('商品価格が変更されました。QRを作り直してください。');
-  const customer=customerSnap.exists()?customerSnap.data():null;
+  // Keep legacy QR orders (created before this TEST patch) readable. New QR
+  // checkouts are staged and promoted only by the merchant's scan transaction.
+  if(pendingSnap.exists() && customerSnap.exists())throw Error('注文の顧客データが重複しています。管理者にお問い合わせください。');
+  const customer=pendingSnap.exists()?pendingSnap.data():customerSnap.exists()?customerSnap.data():null;
+  if(pendingSnap.exists() && (customer?.slug!==brand.slug||customer?.brandId!==user.uid||customer?.orderId!==raw.o))
+   throw Error('購入者データと注文番号が一致しません。購入QRを再発行してください。');
   if(raw.r===1 && (!customer||customer.registered!==true||customer.brandId!==user.uid||customer.slug!==brand.slug))throw Error('お客様の登録データを確認できません。QRを再発行してください。');
   if(raw.r===0&&customer&&customer.registered===true)throw Error('注文の登録状態が一致しません。QRを再発行してください。');
   if(latest.hasPreorder && (!customer||customer.hasPreorder!==true||customer.brandId!==user.uid||customer.shipping?.prefecture!==latest.shippingPrefecture))throw Error('予約商品の受付情報が見つかりません。購入QRを再発行してください。');
@@ -312,6 +318,13 @@ async function reserveAtScan(parsed,quote){
   tx.set(refs.sale,data);
   tx.set(refs.confirmation,{slug:brand.slug,brandId:user.uid,orderId:raw.o,status:'confirmed',confirmedAt:serverTimestamp(),
     amount:latest.amount,modified:false,hasPreorder:latest.hasPreorder,updatedAt:serverTimestamp()});
+  if(pendingSnap.exists()){
+   // Only a verified staff-side QR scan can promote staged buyer details to
+   // the brand's confirmed customer ledger. A single transaction also removes
+   // the transient staging record so it is not left behind after acceptance.
+   tx.set(customerRef,customer);
+   tx.delete(pendingRef);
+  }
   return {already:false,data};
  },{maxAttempts:5});
 }

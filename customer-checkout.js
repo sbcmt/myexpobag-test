@@ -18,7 +18,7 @@ window.MEB_SAVE_PRIVATE_CHECKOUT=async function(payload){
   shipping:{...blank(),prefecture:String(payload.prefecture||'')},deliverySubmitted:false,
   creatorUid:user.uid,createdAt:serverTimestamp()};
  if(!data.registered&&!data.hasPreorder)return false;
- await setDoc(doc(db,'customerOrders',payload.slug,'orders',payload.orderId),data);
+ await setDoc(doc(db,'pendingCustomerOrders',payload.slug,'orders',payload.orderId),data);
  return true;
 };
 // Called only AFTER the brand owner scans the QR. Firestore rules independently
