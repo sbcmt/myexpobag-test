@@ -1,3 +1,4 @@
+import {stockAuditFields,STOCK_AUDIT_BATCH_LIMIT} from './stock-audit.js';
 /**
  * MY EXPO BAG TEST — shared automatic, public-safe catalog synchronizer.
  * Runs AFTER a private product/category/image write is committed.
@@ -95,29 +96,68 @@ export async function syncCustomerCatalog({db,uid,slug,pro=false,onProgress=()=>
    await batch.commit();
   }
   publicationStage='公開在庫同期';
-  // Inventory is separate from the public catalog to avoid downloading large catalog documents per sale.
-  // Publishing stock from the latest private draft prevents stale client overwrites.
-  // Read private stock values INSIDE a transaction. A concurrent QR sale
-  // retries the publish instead of accidentally restoring deducted inventory.
-  let appliedStock=null;
-  await runTransaction(db,async tx=>{
-    const inventoryDocs=visible.map(productRecord=>doc(db,'brands',uid,'products',productRecord.id));
-    const stocks=await Promise.all(inventoryDocs.map(ref=>tx.get(ref)));
-    const next=Object.fromEntries(visible.map((productRecord,i)=>[
-      productRecord.id,stocks[i].exists()&&!(stocks[i].data().variants||[]).length?((stocks[i].data().preorder===true?stocks[i].data().reservationStock:stocks[i].data().stock)??null):null
-    ]));
-    const variantQuantities={};
-    visible.forEach((productRecord,i)=>{
-      const current=stocks[i].exists()?stocks[i].data():productRecord;
-      for(const variant of current.variants||[]){
-        variantQuantities[productRecord.id+'::'+variant.code]=(variant.preorder===true?variant.reservationStock:variant.stock)??null;
-      }
+  // Keep the existing ONE-document public stock listener and atomic QR sale
+  // updates. The rules audit each changed key; large publications are split
+  // into small, transactional, individually validated updates.
+  const stockRef=doc(db,'publishedStock',slug);
+  const publishedIds=new Set(visible.map(p=>p.id));
+  const initialStock=await getDocFromServer(stockRef);
+  const sourceStock=initialStock.exists()?initialStock.data():{};
+  const productKeys=[...new Set([...Object.keys(sourceStock.quantities||{}),...visible.map(p=>p.id)])];
+  const variantKeys=[...new Set([
+   ...Object.keys(sourceStock.variantQuantities||{}),
+   ...visible.flatMap(p=>(p.variants||[]).map(v=>p.id+'::'+v.code))
+  ])];
+  // Creation must start with an empty audited map. Subsequent changes are
+  // individually validated by Firestore Rules, including during initial sync.
+  if(!initialStock.exists()){
+   await runTransaction(db,async tx=>{
+    const current=await tx.get(stockRef);
+    if(!current.exists())tx.set(stockRef,{
+     slug,brandId:uid,quantities:{},variantQuantities:{},
+     auditedQuantityIds:[],auditedVariantKeys:[],updatedAt:serverTimestamp()
     });
-    tx.set(doc(db,'publishedStock',slug),{
-      brandId:uid,slug:slug,quantities:next,variantQuantities,updatedAt:serverTimestamp()
-    });
-    appliedStock={quantities:next,variantQuantities};
-  });
+   });
+  }
+  const batchCount=Math.max(1,Math.ceil(productKeys.length/STOCK_AUDIT_BATCH_LIMIT),Math.ceil(variantKeys.length/STOCK_AUDIT_BATCH_LIMIT));
+  for(let i=0;i<batchCount;i++){
+   const partProducts=productKeys.slice(i*STOCK_AUDIT_BATCH_LIMIT,(i+1)*STOCK_AUDIT_BATCH_LIMIT);
+   const partVariants=variantKeys.slice(i*STOCK_AUDIT_BATCH_LIMIT,(i+1)*STOCK_AUDIT_BATCH_LIMIT);
+   const productIds=[...new Set([
+    ...partProducts.filter(id=>publishedIds.has(id)),
+    ...partVariants.map(key=>key.split('::')[0]).filter(id=>publishedIds.has(id))
+   ])];
+   await runTransaction(db,async tx=>{
+    const privateRefs=productIds.map(id=>doc(db,'brands',uid,'products',id));
+    // All private stock reads are performed in the SAME transaction as the
+    // public write. A concurrent scan retries instead of undoing a sale.
+    const [stockSnap,...privateSnaps]=await Promise.all([tx.get(stockRef),...privateRefs.map(ref=>tx.get(ref))]);
+    if(!stockSnap.exists())throw Error('公開在庫の初期化に失敗しました。');
+    const existing=stockSnap.data();
+    if(existing.slug!==slug||existing.brandId!==uid)throw Error('公開在庫のブランド識別子が一致しません。');
+    const latest=new Map(privateSnaps.map((snapshot,index)=>[productIds[index],snapshot.exists()?snapshot.data():null]));
+    const quantities={...(existing.quantities||{})};
+    const variantQuantities={...(existing.variantQuantities||{})};
+    for(const id of partProducts){
+     const p=latest.get(id);
+     if(!publishedIds.has(id)||!p||p.active===false){delete quantities[id];continue;}
+     quantities[id]=(p.variants||[]).length?null:((p.preorder===true?p.reservationStock:p.stock)??null);
+    }
+    for(const key of partVariants){
+     const cut=key.indexOf('::');
+     const id=cut<0?'':key.slice(0,cut),code=cut<0?'':key.slice(cut+2);
+     const p=latest.get(id),v=p?.variants?.find(x=>x.code===code);
+     if(!publishedIds.has(id)||!p||p.active===false||!v){delete variantQuantities[key];continue;}
+     variantQuantities[key]=(v.preorder===true?v.reservationStock:v.stock)??null;
+    }
+    const audit=stockAuditFields(existing,quantities,variantQuantities);
+    tx.update(stockRef,{quantities,variantQuantities,...audit,updatedAt:serverTimestamp()});
+   });
+   if(batchCount>1&&i%5===4)onProgress('公開在庫を検証して同期しています（'+(i+1)+'/'+batchCount+'）');
+  }
+  const confirmedStock=await getDocFromServer(stockRef);
+  if(!confirmedStock.exists())throw Error('公開在庫が見つかりません。');
+  const appliedStock={quantities:confirmedStock.data().quantities||{},variantQuantities:confirmedStock.data().variantQuantities||{}};
   // Verify the public catalog contains every variant before reporting a successful publish.
   const publicCheck=await getDocFromServer(doc(db,'publishedCatalogs',slug));
   if(!publicCheck.exists())throw Error('公開データを確認できません。もう一度公開してください。');

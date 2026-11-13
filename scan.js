@@ -1,3 +1,4 @@
+import {stockAuditFields} from './stock-audit.js';
 /** MY EXPO BAG v1.0.1 — scan → atomic stock reservation → customer review → handoff. */
 import {initializeApp,getApps,getApp} from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
 import {getAuth,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
@@ -300,7 +301,7 @@ async function reserveAtScan(parsed,quote){
     tx.update(productRefs[ids.indexOf(id)],update);
    }
   }
-  tx.update(refs.stock,{quantities:newQuantities,variantQuantities:newVariantQuantities,updatedAt:serverTimestamp()});
+  tx.update(refs.stock,{quantities:newQuantities,variantQuantities:newVariantQuantities,...stockAuditFields(stock,newQuantities,newVariantQuantities),updatedAt:serverTimestamp()});
   const data={orderId:raw.o,brandId:user.uid,originalItems:compactItems(items),originalAmount:latest.amount,
    originalLines,remainingLines:originalLines,bundles,items:compactItems(items),amount:latest.amount,status:'reserved',
    discountMode:latest.discountMode,discountValue:latest.discountValue,discountMinSpend:latest.discountMinSpend,discountRegistered:latest.discountRegistered,discountApplyToPreorder:latest.discountApplyToPreorder,
@@ -397,7 +398,7 @@ async function cancelLine(key,all=false){
    const base=reprice(kept,sale.bundles||[],sale,true);
    const shippingFee=kept.some(x=>x.preorder===true)&&['threshold','prefecture'].includes(sale.shippingMode)&&((sale.shippingThreshold||0)<=0||base<(sale.shippingThreshold||0))?(sale.shippingCharge||0):0;
    const nextStatus=kept.length?'reserved':'cancelled';
-   tx.update(refs.stock,{quantities:next,variantQuantities:nextVariants,updatedAt:serverTimestamp()});
+   tx.update(refs.stock,{quantities:next,variantQuantities:nextVariants,...stockAuditFields(stock,next,nextVariants),updatedAt:serverTimestamp()});
    if(kept.length){
     tx.update(refs.sale,{items:compactItems(kept),remainingLines:kept,amount,shippingFee,status:nextStatus,updatedAt:serverTimestamp()});
    }else{

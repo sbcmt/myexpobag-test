@@ -1,3 +1,4 @@
+import {stockAuditFields,STOCK_AUDIT_BATCH_LIMIT} from './stock-audit.js';
 /**
  * MY EXPO BAG TEST — safely remove one product from the public-only snapshot.
  * Private product data and order history are never deleted by this function.
@@ -13,7 +14,7 @@ export async function unpublishOneProduct({db,uid,slug,productId,allowActiveDraf
   const catalogRef=doc(db,'publishedCatalogs',slug);
   const stockRef=doc(db,'publishedStock',slug);
   const publicImageRef=doc(db,'publishedCatalogs',slug,'images',productId);
-  return runTransaction(db,async tx=>{
+  const outcome=await runTransaction(db,async tx=>{
     // The draft read ties the action to the saved active state and prevents
     // accidentally unpublishing a different product after a stale UI update.
     const [draft,catalog,stock]=await Promise.all([
@@ -44,12 +45,38 @@ export async function unpublishOneProduct({db,uid,slug,productId,allowActiveDraf
       const quantities={...(old.quantities||{})};
       const variantQuantities={...(old.variantQuantities||{})};
       delete quantities[productId];
-      for(const key of Object.keys(variantQuantities))if(key.startsWith(productId+'::'))delete variantQuantities[key];
-      tx.update(stockRef,{quantities,variantQuantities,updatedAt:serverTimestamp()});
+      const stale=Object.keys(variantQuantities).filter(key=>key.startsWith(productId+'::'));
+      for(const key of stale.slice(0,STOCK_AUDIT_BATCH_LIMIT))delete variantQuantities[key];
+      tx.update(stockRef,{quantities,variantQuantities,...stockAuditFields(old,quantities,variantQuantities),updatedAt:serverTimestamp()});
     }
     // Removing the public image in the same transaction ensures its access
     // is not left enabled after the catalog stops referencing this product.
     tx.delete(publicImageRef);
     return {removed:true};
   });
+  // For products with >24 variants, keep the catalog/image unlink atomic,
+  // and clean up the remaining (now invisible) stock entries in audited chunks.
+  if(outcome.removed){
+    for(let part=0;part<500;part++){
+      const again=await runTransaction(db,async tx=>{
+        const snapshot=await tx.get(stockRef);
+        if(!snapshot.exists())return false;
+        const old=snapshot.data();
+        const quantities={...(old.quantities||{})};
+        const variantQuantities={...(old.variantQuantities||{})};
+        const dangling=Object.keys(variantQuantities).filter(key=>key.startsWith(productId+'::'));
+        if(!dangling.length)return false;
+        for(const key of dangling.slice(0,STOCK_AUDIT_BATCH_LIMIT))delete variantQuantities[key];
+        tx.update(stockRef,{
+          quantities,variantQuantities,
+          ...stockAuditFields(old,quantities,variantQuantities),
+          updatedAt:serverTimestamp()
+        });
+        return true;
+      });
+      if(!again)return outcome;
+    }
+    throw Error('公開在庫の不要なバリエーションの削除が完了しませんでした。再同期してください。');
+  }
+  return outcome;
 }

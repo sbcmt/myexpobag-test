@@ -1,3 +1,4 @@
+import {stockAuditFields} from './stock-audit.js';
 /** MY EXPO BAG — authenticated quick editing with automatic public synchronization. */
 import {initializeApp,getApps,getApp} from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
 import {getAuth,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
@@ -305,7 +306,7 @@ async function deleteSelected(){
     if(stock.exists()){
      const previous=stock.data(),quantities={...(previous.quantities||{})},variantQuantities={...(previous.variantQuantities||{})};
      delete quantities[id];for(const key of Object.keys(variantQuantities))if(key.startsWith(id+'::'))delete variantQuantities[key];
-     tx.update(stockRef,{quantities,variantQuantities,updatedAt:serverTimestamp()});
+     tx.update(stockRef,{quantities,variantQuantities,...stockAuditFields(previous,quantities,variantQuantities),updatedAt:serverTimestamp()});
     }
     if(settings.exists()){
      const data=settings.data(),n=data.novelty||{},oldIds=Array.isArray(n.productIds)?n.productIds:(n.productId?[n.productId]:[]),nextIds=oldIds.filter(x=>x!==id);
