@@ -1,4 +1,5 @@
 import {stockAuditFields} from './stock-audit.js';
+import {CANCEL_API_URL} from './cancel-api-config.js';
 /** MY EXPO BAG v1.0.1 — scan → atomic stock reservation → customer review → handoff. */
 import {initializeApp,getApps,getApp} from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
 import {getAuth,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js';
@@ -360,69 +361,23 @@ async function cancelLine(key,all=false){
  document.querySelectorAll('.cancel-line,#prepare,#handoff,#retry,#cancel-all,#prepared-cancel-all').forEach(b=>b.disabled=true);
  $('review-error').hidden=true;
  try{
-  const refs=refsForOrder(candidate.raw);
-  const updated=await runTransaction(db,async tx=>{
-   const saleSnap=await tx.get(refs.sale);
-   if(!saleSnap.exists())throw Error('注文履歴が見つかりません。');
-   const sale=saleSnap.data();
-   if(sale.status!=='reserved')throw Error('この注文は確保中ではありません。取り消しできません。');
-   if(!Array.isArray(sale.originalLines)||!Array.isArray(sale.remainingLines))throw Error('以前の形式の注文は取り消せません。');
-   const removed=all?sale.remainingLines:sale.remainingLines.filter(x=>x.key===key);
-   if(!removed.length)throw Error('この商品はすでに取り消されています。画面を再表示してください。');
-   const kept=all?[]:sale.remainingLines.filter(x=>x.key!==key);
-   const totals=new Map();for(const line of removed)totals.set(line.id,(totals.get(line.id)||0)+line.qty);
-   const ids=[...totals.keys()];const productRefs=ids.map(id=>doc(db,'brands',user.uid,'products',id));
-   const customerRef=doc(db,'customerOrders',brand.slug,'orders',candidate.raw.o);
-   const [stockSnap,ackSnap,customerSnap,...privateSnaps]=await Promise.all([tx.get(refs.stock),tx.get(refs.confirmation),tx.get(customerRef),...productRefs.map(r=>tx.get(r))]);
-   if(!stockSnap.exists()||!ackSnap.exists())throw Error('現在の在庫情報に不整合があります。');
-   const stock=stockSnap.data(),next={...stock.quantities},nextVariants={...(stock.variantQuantities||{})};
-   if(stock.brandId!==user.uid)throw Error('在庫の管理ブランドが一致しません。');
-   ids.forEach((id,i)=>{
-    if(!(id in next))throw Error('在庫情報が見つかりません：'+id);
-    const qty=totals.get(id),current=next[id];
-    // Parent stock does not control variants. Handle unvarianted items below, after reading product.
-    if(current!==null&&!Number.isInteger(current))throw Error('在庫の復元数が不正です');
-    if(!privateSnaps[i].exists())throw Error('元の商品が見つかりません：'+id);
-    const priv=privateSnaps[i].data();
-    if(!(priv.variants||[]).length && current!==null){if(current+qty>100000000)throw Error('在庫の復元数が不正です');next[id]=current+qty;}
-    else if((priv.variants||[]).length)next[id]=null;
-    const revised=(priv.variants||[]).map(v=>({...v}));
-    let variantChanged=false;
-    for(const line of removed.filter(x=>x.id===id && x.variant)){
-     const key=id+'::'+line.variant;
-     const currentVariantStock=nextVariants[key];
-     if(Number.isInteger(currentVariantStock)){
-      if(currentVariantStock+line.qty>100000000)throw Error('SKU在庫の復元数が不正です');
-      nextVariants[key]=currentVariantStock+line.qty;
-     }
-     const variant=revised.find(v=>v.code===line.variant);
-     if(!variant)throw Error('元のバリエーションが見つかりません：'+key);
-     if(Number.isInteger(variant.stock)){variant.stock+=line.qty;variantChanged=true;}
-    }
-    if(Number.isInteger(priv.stock)||variantChanged){
-     const update={updatedAt:serverTimestamp()};
-     if((priv.variants||[]).length)update.stock=null;
-     else if(Number.isInteger(priv.stock)){if(priv.stock+qty>100000000)throw Error('商品在庫が上限を超えます');update.stock=priv.stock+qty;}
-     if(variantChanged)update.variants=revised;
-     tx.update(productRefs[i],update);
-    }
-   });
-   const amount=reprice(kept,sale.bundles||[],sale);
-   const base=reprice(kept,sale.bundles||[],sale,true);
-   const shippingFee=kept.some(x=>x.preorder===true)&&['threshold','prefecture'].includes(sale.shippingMode)&&((sale.shippingThreshold||0)<=0||base<(sale.shippingThreshold||0))?(sale.shippingCharge||0):0;
-   const nextStatus=kept.length?'reserved':'cancelled';
-   tx.update(refs.stock,{quantities:next,variantQuantities:nextVariants,...stockAuditFields(stock,next,nextVariants,new Map(privateSnaps.map((snap,i)=>[ids[i],snap.exists()?snap.data():null]))),updatedAt:serverTimestamp()});
-   if(kept.length){
-    tx.update(refs.sale,{items:compactItems(kept),remainingLines:kept,amount,shippingFee,status:nextStatus,updatedAt:serverTimestamp()});
-   }else{
-    // Full cancellation removes the sale and private buyer record atomically.
-    // The public confirmation is retained as a non-personal QR replay blocker.
-    tx.delete(refs.sale);
-    if(customerSnap.exists())tx.delete(customerRef);
-   }
-   tx.update(refs.confirmation,{amount:kept.length?amount:0,status:kept.length?'confirmed':'cancelled',hasPreorder:kept.some(x=>x.preorder===true),modified:true,updatedAt:serverTimestamp()});
-   return {lines:kept,amount,shippingFee,hasPreorder:kept.some(x=>x.preorder===true),status:nextStatus};
-  },{maxAttempts:5});
+  // TEST-only trusted cancellation API; the browser never sends a price.
+  if(firebase.projectId!=='my-expo-bag-test')throw Error('TEST専用の取消サービスです。');
+  if(!/^https:\/\/[-a-zA-Z0-9.]+(?:\:[0-9]+)?(?:\/.*)?$/.test(CANCEL_API_URL)||
+     /YOUR-|YOUR_|REPLACE|example\./i.test(CANCEL_API_URL))
+    throw Error('取消用の安全なサーバーが未設定です。管理者へお問い合わせください。');
+  const token=await user.getIdToken();
+  const response=await fetch(new URL('/v1/orders/cancel',CANCEL_API_URL).href,{
+    method:'POST',
+    headers:{'content-type':'application/json','authorization':'Bearer '+token},
+    body:JSON.stringify({orderId:candidate.raw.o,key:all?'':key,all})
+  });
+  const payload=await response.json().catch(()=>({}));
+  if(!response.ok||payload.ok!==true)throw Error(payload.error||'取消用サーバーで処理できませんでした。');
+  const updated=payload.result;
+  if(!updated||!Array.isArray(updated.lines)||!Number.isInteger(updated.amount)||
+    !['reserved','cancelled'].includes(updated.status))
+    throw Error('取消結果の形式が不正です。注文画面を再表示してください。');
   candidate={...candidate,...updated};refreshGift(candidate);
   if(updated.status==='cancelled'){display('cancelled');}
   else if(previousStage==='prepared')prepView();else acceptedView(candidate,true);
